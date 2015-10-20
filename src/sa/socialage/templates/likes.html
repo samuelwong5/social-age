@@ -1,5 +1,16 @@
+<html>
+<head>
+<script type="text/javascript">
+   if (window.location.hash == '#_=_') {
+      window.location.hash = '';
+   }
+</script>
+</head>
+<body>
 <table>
 {% for like in pages_liked %}
-<tr><td>{{like.page.name}}</td><td>{{like.page.id}}</td></tr>
+<tr><td>{{like.page.name}}</td><td>{{like.page.id}}</td><td>{{like.time}}</td></tr>
 {% endfor %}
 </table>
+</body>
+</html>

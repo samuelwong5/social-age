@@ -9,4 +9,4 @@ Start the Django server using:
 
     > python manage.py runserver 0.0.0.0:8080
     
-Then proceed to http://localhost:8080/sa/ on any webbrowser.
+Then proceed to http://localhost:8080/ on any webbrowser.
