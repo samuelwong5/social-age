@@ -1,9 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import User
+
 
 class FacebookUser(models.Model):
     id = models.CharField(primary_key=True, max_length=30, unique=True)
     name = models.CharField(max_length=100)
+    birthday = models.DateTimeField('date_liked')
 
 class FacebookPage(models.Model):
     id = models.CharField(primary_key=True, max_length=30, unique=True)

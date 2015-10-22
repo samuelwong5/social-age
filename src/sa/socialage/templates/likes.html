@@ -7,6 +7,8 @@
 </script>
 </head>
 <body>
+Name: {{ username }} <br>
+Birthday: {{ birthday }} <br>
 <table>
 {% for like in pages_liked %}
 <tr><td>{{like.page.name}}</td><td>{{like.page.id}}</td><td>{{like.time}}</td></tr>
