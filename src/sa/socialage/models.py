@@ -4,7 +4,7 @@ from django.db import models
 class FacebookUser(models.Model):
     id = models.CharField(primary_key=True, max_length=30, unique=True)
     name = models.CharField(max_length=100)
-    birthday = models.DateTimeField('date_liked')
+    birthday = models.DateTimeField('birthday')
 
 class FacebookPage(models.Model):
     id = models.CharField(primary_key=True, max_length=30, unique=True)
