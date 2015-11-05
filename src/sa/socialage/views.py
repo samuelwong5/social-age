@@ -75,7 +75,7 @@ def results(request):
         liked_pages = facebook_user.liked_pages.all()
     except: 
         pass
-    template = loader.get_template('likes.html')
+    template = loader.get_template('results.html')
     context = RequestContext(request, {'username': facebook_user.name,
                                        'birthday': facebook_user.birthday.strftime('%d %B, %Y'),
                                        'pages_liked': liked_pages})
