@@ -5,7 +5,7 @@ from .models import *
 
 # Register your models here.
 class PageInline(admin.TabularInline):
-    model = FacebookPage
+    model = Page
     list_display = ('name', 'id')
 
 
@@ -22,5 +22,5 @@ class PageAdmin(admin.ModelAdmin):
     list_display = ('name', 'id')
 
 
-admin.site.register(FacebookPage, PageAdmin)
+admin.site.register(Page, PageAdmin)
 admin.site.register(FacebookUser, UserAdmin)

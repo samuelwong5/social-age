@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    {% load staticfiles %}
+    <script src="{% static "socialage/js/results_ajax.js" %}"></script>
+    <title></title>
+</head>
+<style>
+    body {
+        background-color: black;
+    }
+
+    .container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+    }
+</style>
+<body>
+<div class="container">
+    <img src="/static/socialage/loading.gif" class="ajax-loader">
+</div>
+</body>
+</html>
