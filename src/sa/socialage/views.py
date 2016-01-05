@@ -131,8 +131,8 @@ def results(request):
         pass
     template = loader.get_template('likes.html')
     context = RequestContext(request, {'username': facebook_user.name,
-                                   'birthday': facebook_user.birthday.strftime('%d %B, %Y'),
-                                   'pages_liked': liked_pages})
+                                       'birthday': facebook_user.birthday.strftime('%d %B, %Y'),
+                                       'pages_liked': liked_pages})
     return HttpResponse(template.render(context))
 
 
@@ -156,108 +156,110 @@ def test(request):
 
 # ==========================================twitter API=============================================
 
-CONSUMER_ID="u49f8lp426j6EPQfvANuIWmIp"
-CONSUMER_SECRET="qDl3VJZ6KiIjiQxZN96QdopNRuLayIIPhdgqgkGdb4FMu4gffx"
-
+CONSUMER_ID = "u49f8lp426j6EPQfvANuIWmIp"
+CONSUMER_SECRET = "qDl3VJZ6KiIjiQxZN96QdopNRuLayIIPhdgqgkGdb4FMu4gffx"
 BASE_API_URL = 'https://api.twitter.com/'
 
-PARAM_STRING_FOR_REQUEST_TOKEN= 'oauth_callback=http://0.0.0.0:8080/twitter&oauth_consumer_key={0}&oauth_nonce={1}&oauth_signature_method=HMAC-SHA1&oauth_timestamp={2}&oauth_version=1.0'
-PARAM_STRING_FOR_ACCESS_TOKEN= 'oauth_consumer_key={0}&oauth_nonce={1}&oauth_signature_method=HMAC-SHA1&oauth_timestamp={2}&oauth_token={3}&oauth_version=1.0'
-PARAM_STRING_FOR_GET_FOLLOWING= 'count=5000&cursor=-1&oauth_consumer_key={0}&oauth_nonce={1}&oauth_signature_method=HMAC-SHA1&oauth_timestamp={2}&oauth_token={3}&oauth_version=1.0&screen_name={4}'
 
 def twitter(request):
-    # requesting a request token
     if not request.GET:
-        nonce = oauth_nonce()
-        timestamp = oauth_timestamp()
-        signature = oauth_signature('POST' , twitter_api_url_format('oauth/request_token'), nonce, timestamp, PARAM_STRING_FOR_REQUEST_TOKEN)
-        headers = ('OAuth oauth_callback="http://0.0.0.0:8080/twitter", ' +                         # callback 
-                   'oauth_consumer_key="' + CONSUMER_ID + '", ' +                                   # consumer id
-                   'oauth_nonce="' + nonce + '", ' +                                                # nonce
-                   'oauth_signature="' + signature + '", ' +                                        # signature 
-                   'oauth_signature_method="HMAC-SHA1", ' +                                         # signature method
-                   'oauth_timestamp="' + timestamp + '", ' +                                        # timestamp
-                   'oauth_version="1.0"')                                                           # oauth version
+        # Getting a request token
+        hdr = {'oauth_callback': 'http://127.0.0.1:8080/twitter',
+               'oauth_consumer_key': CONSUMER_ID,  # consumer id
+               'oauth_nonce': oauth_nonce(),  # nonce
+               'oauth_signature_method': 'HMAC-SHA1',  # signature method
+               'oauth_timestamp': oauth_timestamp(),  # timestamp
+               'oauth_version': '1.0'}
+        signature = oauth_sign('POST', twitter_api_url_format('oauth/request_token'), hdr)
+        hdr['oauth_signature'] = signature
+        headers = twitter_header(hdr)
         token = twitter_api_post('oauth/request_token', headers)
         request.session['oauth_token'] = token['oauth_token']
         request.session['oauth_token_secret'] = token['oauth_token_secret']
-    #authenticate users
-        url = twitter_api_url_format('oauth/authenticate', {'oauth_token': request.session['oauth_token']})
+
+        # Redirecting users to Twitter login page
         return redirect(twitter_api_url_format('oauth/authenticate', {'oauth_token': request.session['oauth_token']}))
     else:
-    # upgrade request token to access token
-        nonce = oauth_nonce()
-        timestamp = oauth_timestamp()
-        signature = oauth_signature('POST' , twitter_api_url_format('oauth/access_token'), nonce, timestamp, PARAM_STRING_FOR_ACCESS_TOKEN, oauth_token=request.session['oauth_token'])
-        headers = ('OAuth oauth_consumer_key="' + CONSUMER_ID + '", ' +                                   # consumer id
-                   'oauth_nonce="' + nonce + '", ' +                                                # nonce
-                   'oauth_signature="' + signature + '", ' +                                        # signature 
-                   'oauth_signature_method="HMAC-SHA1", ' +                                         # signature method
-                   'oauth_timestamp="' + timestamp + '", ' +                                        # timestamp
-                   'oauth_token="' + request.session['oauth_token'] + '",' +                        # request token
-                   'oauth_version="1.0"')       
+        # Exchange request token for access token
+        hdr = {'oauth_consumer_key': CONSUMER_ID,  # consumer id
+               'oauth_nonce': oauth_nonce(),  # nonce
+               'oauth_signature_method': 'HMAC-SHA1',  # signature method
+               'oauth_timestamp': oauth_timestamp(),  # timestamp
+               'oauth_token': request.session['oauth_token'],  # access token
+               'oauth_version': '1.0'}
+        signature = oauth_sign('POST', twitter_api_url_format('oauth/access_token'), hdr)
+        hdr['oauth_signature'] = signature
+        headers = twitter_header(hdr)
         token = twitter_api_post('oauth/access_token', headers, {'oauth_verifier': request.GET.get("oauth_verifier")})
         request.session['access_token'] = token['oauth_token']
         request.session['access_token_secret'] = token['oauth_token_secret']
-        # get twitter following list
-        url = 'https://api.twitter.com/1.1/friends/ids.json?' + urllib.parse.urlencode({'count': 5000, 'cursor': -1, 'screen_name': token['screen_name']})
-        print(url)
-        nonce = oauth_nonce()
-        timestamp = oauth_timestamp()
-        signature = oauth_signature('GET' , twitter_api_url_format('1.1/friends/ids.json'), nonce, timestamp, PARAM_STRING_FOR_GET_FOLLOWING, oauth_token=request.session['access_token'], oauth_token_secret=request.session['access_token_secret'], screen_name=token['screen_name'])
-        headers = ('OAuth oauth_consumer_key="' + CONSUMER_ID + '", ' +                             # consumer id
-                   'oauth_nonce="' + nonce + '", ' +                                                # nonce
-                   'oauth_signature="' + signature + '", ' +                                        # signature 
-                   'oauth_signature_method="HMAC-SHA1", ' +                                         # signature method
-                   'oauth_timestamp="' + timestamp + '", ' +                                        # timestamp
-                   'oauth_token="' + request.session['access_token'] + '",' +                        # access token
-                   'oauth_version="1.0"')
-        print('creating req')
-        r = urllib.request.Request(url)
-        print('adding headers')
-        r.add_header('Authorization', headers)
-        print('requesting url')
-        r1 = urllib.request.urlopen(r)
-        print('reading output')
-        ids = json.loads(r1.read().decode('utf-8'))
+
+        # Get twitter follower/ids
+        follower_id_params = {'count': 5000, 'cursor': -1, 'screen_name': token['screen_name']}
+        url = 'https://api.twitter.com/1.1/friends/ids.json?' + urllib.parse.urlencode(follower_id_params)
+        hdr = {'oauth_consumer_key': CONSUMER_ID,  # consumer id
+               'oauth_nonce': oauth_nonce(),  # nonce
+               'oauth_signature_method': 'HMAC-SHA1',  # signature method
+               'oauth_timestamp': oauth_timestamp(),  # timestamp
+               'oauth_token': request.session['access_token'],  # access token
+               'oauth_version': '1.0'}
+        follower_id_params.update(hdr)
+        signature = oauth_sign('GET',
+                               twitter_api_url_format('1.1/friends/ids.json'),
+                               follower_id_params,
+                               request.session['access_token_secret'])
+        hdr['oauth_signature'] = signature
+        headers = ('OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(hdr.items())))))
+        follower_id_request = urllib.request.Request(url)
+        follower_id_request.add_header('Authorization', headers)
+        ids = json.loads(urllib.request.urlopen(follower_id_request).read().decode('utf-8'))
         return JsonResponse(ids)
 
 
+'''
+Takes a dictionary of key values required by the Twitter API and
+returns the header. Add the header to the HTTP request by
 
-#  Parameter of oauth request
-def oauth_signature(method, url, nonce, timestamp, p_string, oauth_token={}, oauth_token_secret={}, screen_name={}):
-    param_string = p_string.format(CONSUMER_ID, nonce, timestamp, oauth_token, screen_name)
-    base_string = ('{0}&{1}&{2}'.format(method,urllib.parse.quote(url, safe=''), urllib.parse.quote(param_string, safe=''))).encode()
-    print(base_string)
-    # generate the signature key 
-    if oauth_token_secret == {}:
-        signing_key = (CONSUMER_SECRET+'&').encode()
-    else:
-        signing_key = (CONSUMER_SECRET + '&' + oauth_token_secret).encode()
-    
-    hashed = hmac.new(signing_key, base_string, hashlib.sha1)
-    sign = b64encode(hashed.digest())
-    return urllib.parse.quote(sign.decode(), safe='')
+   request.add_header('Authorization', headers)
+'''
+
+
+def twitter_header(dict):
+    return ('OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(dict.items())))))
+
+
+def oauth_sign(method, url, dict, oauth_token_secret=''):
+    base_string = '&'.join(list(map(lambda x: str(x[0]) + '=' + str(x[1]), sorted(dict.items()))))
+    signing_key = CONSUMER_SECRET + '&' + oauth_token_secret
+    base_string = '{0}&{1}&{2}'.format(method, urllib.parse.quote(url, safe=''),
+                                       urllib.parse.quote(base_string, safe=''))
+    hash = hmac.new(signing_key.encode(), base_string.encode(), hashlib.sha1)
+    sign = b64encode(hash.digest())
+    return urllib.parse.quote(sign.decode())
+
 
 def oauth_nonce():
     random_string = ''.join(list((random.choice(string.ascii_letters + string.digits)) for i in range(32)))
     return random_string
 
+
 def oauth_timestamp():
     return str(int(time.time()))
 
-# Contrust http requests
+
+# Construct http requests
 def twitter_api_url_format(url, params={}):
     if params == {}:
         return (BASE_API_URL + url)
     else:
         return '{0}{1}?{2}'.format(BASE_API_URL, url, urllib.parse.urlencode(params))
 
+
 def twitter_api_post(url, headers, data={}):
     url = twitter_api_url_format(url)
     req = urllib.request.Request(url)
     req.add_header('Authorization', headers)
-    enc_data =urllib.parse.urlencode(data)
+    enc_data = urllib.parse.urlencode(data)
     content_length = len(enc_data)
     if content_length > 0:
         req.add_header('Content-Length', content_length)
@@ -268,5 +270,4 @@ def twitter_api_post(url, headers, data={}):
     for i in rep1:
         kv = i.split('=')
         rep2[kv[0]] = kv[1]
-    print(rep2)
     return rep2
