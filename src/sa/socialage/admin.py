@@ -22,5 +22,10 @@ class PageAdmin(admin.ModelAdmin):
     list_display = ('name', 'id')
 
 
+class PageLikeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'page', 'time')
+
+
 admin.site.register(Page, PageAdmin)
 admin.site.register(FacebookUser, UserAdmin)
+admin.site.register(FacebookPageLike, PageLikeAdmin)
