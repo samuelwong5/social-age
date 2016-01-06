@@ -6,14 +6,17 @@ from collections import OrderedDict
 
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 freq = codecs.open('star_age_frequencies.csv', 'r', 'utf-8')
-jsonFile = open('star_age_frequencies.json', 'w')
+jsonFile = codecs.open('star_age_frequencies.json', 'w', 'utf-8')
 
 
 freqReader = csv.DictReader(freq)
 pk = 0
 jsonFile.write('[\n')
-
+count = 0
 for row in freqReader:
+    if count >= 2000:
+        break
+    count += 1
     entry = OrderedDict()
     fields = OrderedDict()
 
@@ -64,7 +67,7 @@ for row in freqReader:
 
 jsonFile.seek(0, 2)
 size = jsonFile.tell()
-jsonFile.truncate(size-3)
+jsonFile.truncate(size-2)
 jsonFile.seek(0, 2)
 jsonFile.write('\n]')
 
