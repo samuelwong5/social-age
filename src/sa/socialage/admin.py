@@ -23,4 +23,4 @@ class PageAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Page, PageAdmin)
-admin.site.register(FacebookUser, UserAdmin)
+admin.site.register(User, UserAdmin)

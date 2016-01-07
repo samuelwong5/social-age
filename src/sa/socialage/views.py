@@ -84,28 +84,33 @@ def index(request):
             request.session['user'] = user
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
+        #return redirect('results')
         return HttpResponse(template.render(context))
 
 
 def results(request):
-    user = request.session['user']
+    fb_user = request.session['user']
     try:
-        facebook_user = models.FacebookUser.objects.get(id=user['id'])
-        # Clear previous FacebookPageLike objects associated with the FacebookUser
-        facebook_user.liked_pages.all().delete()
+        user_id = request.session.get('user_id', None)
+        if user_id:
+            user = models.User.objects.get(id=user_id)
+        else:
+            user = models.User.objects.get(fb_id=user['id'])
+        # Clear previous FacebookPageLike objects associated with the User
+        user.liked_pages.all().delete()
     except:
-        facebook_user = None
-    user_bday = timezone.make_aware(datetime.strptime(user['birthday'], '%m/%d/%Y'),
+        user = None
+    user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'),
                                     timezone.UTC())
-    if facebook_user is None:
-        facebook_user = models.FacebookUser.objects.create(id=user['id'], name=user['name'],
-                                                           birthday=user_bday)
+    if user is None:
+        user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'],
+                                          birthday=user_bday)
     else:
-        facebook_user.birthday = user_bday
-        facebook_user.save()
-
+        user.birthday = user_bday
+        user.save()
+    request.session['user_id'] = user.id
     # Retrieve pages liked
-    curr_page = facebook_api_get(user['id'] + '/likes/', {'access_token': request.session.get('access_token')})
+    curr_page = facebook_api_get(fb_user['id'] + '/likes/', {'access_token': request.session.get('access_token')})
     while curr_page.get('paging', False) and curr_page['paging'].get('next', False):
         next_page = curr_page['paging']['next']
         for p in curr_page['data']:
@@ -114,25 +119,24 @@ def results(request):
             except:
                 page = None
             if page is None:
-                page = models.Page.objects.create(id=uuid4(),
-                                                  name=p['name'],
+                page = models.Page.objects.create(name=p['name'],
                                                   fb_id=p['id'],
                                                   fb_handle=p['name'],
                                                   probs='0,0,0,0,0,0,0,0,0,0')
             page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
-            page_like = models.FacebookPageLike.objects.create(user=facebook_user, page=page,
+            page_like = models.FacebookPageLike.objects.create(user=user, page=page,
                                                                time=page_like_time)
         curr_page = http_get(next_page)
-    liked_pages = {}
-    try:
-        facebook_user = models.FacebookUser.objects.get(id=request.session.get('user')['id'])
-        liked_pages = facebook_user.liked_pages.all()
-    except:
-        pass
+
+    user = models.User.objects.get(id=request.session['user_id'])
+
+    ## TODO : PUT THE LIKEDPAGES INTO THE MODEL ##
+
     template = loader.get_template('likes.html')
-    context = RequestContext(request, {'username': facebook_user.name,
-                                       'birthday': facebook_user.birthday.strftime('%d %B, %Y'),
-                                       'pages_liked': liked_pages})
+    context = RequestContext(request, {'username': user.name,
+                                       'birthday': user.birthday.strftime('%d %B, %Y'),
+                                       'pages_liked': user.liked_pages.all(),
+                                       'followed': user.followed_pages.all()})
     return HttpResponse(template.render(context))
 
 
@@ -193,27 +197,67 @@ def twitter(request):
         token = twitter_api_post('oauth/access_token', headers, {'oauth_verifier': request.GET.get("oauth_verifier")})
         request.session['access_token'] = token['oauth_token']
         request.session['access_token_secret'] = token['oauth_token_secret']
+        request.session['tw_id'] = token['user_id']
+        request.session['tw_screen_name'] = token['screen_name']
+        template = loader.get_template('results_ajax_tw.html')
+        context = RequestContext(request, {})
+        #return redirect('twitter_results')
+        return HttpResponse(template.render(context))
 
-        # Get twitter follower/ids
-        follower_id_params = {'count': 5000, 'cursor': -1, 'screen_name': token['screen_name']}
-        url = 'https://api.twitter.com/1.1/friends/ids.json?' + urllib.parse.urlencode(follower_id_params)
+
+def twitter_results(request):
+    try:
+        user_id = request.session.get('user_id', None)
+        if user_id:
+            user = models.User.objects.get(id=user_id)
+        else:
+            user = models.User.objects.get(tw_id=request.session['tw_id'])
+        # Clear previous FacebookPageLike objects associated with the User
+        user.followed_pages.all().delete()
+    except:
+        user = models.User.objects.create(tw_id=request.session['tw_id'], name=request.session['tw_screen_name'])
+
+    request.session['user_id'] = user.id
+
+    # Get twitter follower/ids
+    cursor = -1
+    while cursor != 0:
+        friends_params = {'count': 5000, 'cursor': cursor, 'screen_name': request.session['tw_screen_name']}
+        url = 'https://api.twitter.com/1.1/friends/list.json?' + urllib.parse.urlencode(friends_params)
         hdr = {'oauth_consumer_key': CONSUMER_ID,  # consumer id
-               'oauth_nonce': oauth_nonce(),  # nonce
-               'oauth_signature_method': 'HMAC-SHA1',  # signature method
-               'oauth_timestamp': oauth_timestamp(),  # timestamp
-               'oauth_token': request.session['access_token'],  # access token
-               'oauth_version': '1.0'}
-        follower_id_params.update(hdr)
+                  'oauth_nonce': oauth_nonce(),  # nonce
+                   'oauth_signature_method': 'HMAC-SHA1',  # signature method
+                   'oauth_timestamp': oauth_timestamp(),  # timestamp
+                   'oauth_token': request.session['access_token'],  # access token
+                   'oauth_version': '1.0'}
+        friends_params.update(hdr)
         signature = oauth_sign('GET',
-                               twitter_api_url_format('1.1/friends/ids.json'),
-                               follower_id_params,
-                               request.session['access_token_secret'])
+                                   twitter_api_url_format('1.1/friends/list.json'),
+                                   friends_params,
+                                   request.session['access_token_secret'])
         hdr['oauth_signature'] = signature
-        headers = ('OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(hdr.items())))))
-        follower_id_request = urllib.request.Request(url)
-        follower_id_request.add_header('Authorization', headers)
-        ids = json.loads(urllib.request.urlopen(follower_id_request).read().decode('utf-8'))
-        return JsonResponse(ids)
+        headers = (
+        'OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(hdr.items())))))
+        friends_request = urllib.request.Request(url)
+        friends_request.add_header('Authorization', headers)
+        friends = json.loads(urllib.request.urlopen(friends_request).read().decode('utf-8'))
+        cursor = friends['next_cursor']
+        for f in friends['users']:
+            try:
+                page = models.Page.objects.get(tw_id=f['id'])
+            except:
+                page = models.Page.objects.create(name=f['name'],
+                                                  tw_id=f['id'],
+                                                  tw_handle=f['screen_name'],
+                                                      probs='0,0,0,0,0,0,0,0,0,0')
+            follow = models.TwitterFollow.objects.create(user=user, page=page)
+
+    template = loader.get_template('likes.html')
+    context = RequestContext(request, {'username': user.name,
+                                       'birthday': '',
+                                           'pages_liked': user.liked_pages.all(),
+                                           'followed': user.followed_pages.all()})
+    return HttpResponse(template.render(context))
 
 
 '''
