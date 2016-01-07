@@ -9,5 +9,5 @@ Start the Django server using:
 
     > python manage.py runserver 0.0.0.0:8080
     
-Then proceed to http://localhost:8080/ for Facebook, and http://127.0.0.1:8080/twitter/ for Twitter.
+Then proceed to http://localhost:8080/ and log in using Facebook or Twitter (or both!).
 

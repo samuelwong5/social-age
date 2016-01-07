@@ -23,45 +23,14 @@ APP_ID = 507982369367860
 APP_SECRET = "213bdd72e269941abce42d09f8908765"
 FACEBOOK_GRAPH_BASE_URI = 'https://graph.facebook.com/v2.5/'
 
-'''
-def import_csv(request):
-    count = 0
-    with open('C:\\Users\\user\\Projects\\social_age\\src\\sa\\socialage\\fb_twitter_lookup.csv') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        try:
-            while True:
-                curr = next(reader)
-                nt = next(reader)
-                print(curr[0])
-                while (curr[0] != nt[0]):
-                    curr = nt
-                    next = next(reader)
-                if curr[3] == 'twitter':
-                    tw_id = curr[2]
-                    tw_handle = curr[4]
-                    fb_id = nt[2]
-                    fb_handle = nt[4]
-                else:
-                    fb_id = curr[2]
-                    fb_handle = curr[4]
-                    tw_id = nt[2]
-                    tw_handle = nt[4]
-                id = curr[0]
-                name = curr[6]
-                models.Page.objects.create(id=id,
-                                           name=name,
-                                           fb_id=fb_id,
-                                           fb_handle=fb_handle,
-                                           tw_id=tw_id,
-                                           tw_handle=tw_handle,
-                                           probs='0,0,0,0,0,0,0,0,0,0')
-                count += 1
-        except Exception as e:
-            print str(e)
-    return JsonResponse({'count': count})'''
-
 
 def index(request):
+    template = loader.get_template('index.html')
+    context = RequestContext(request, {})
+    return HttpResponse(template.render(context))
+
+
+def facebook(request):
     if not request.GET:  # New session - Facebook authentication
         request.session['index_uri'] = request.build_absolute_uri()
         return redirect(facebook_api_url_format('oauth/authorize', {'client_id': str(APP_ID),
@@ -84,11 +53,11 @@ def index(request):
             request.session['user'] = user
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
-        #return redirect('results')
+        #return redirect('fb_results')
         return HttpResponse(template.render(context))
 
 
-def results(request):
+def fb_results(request):
     fb_user = request.session['user']
     try:
         user_id = request.session.get('user_id', None)
@@ -126,7 +95,9 @@ def results(request):
             page_like = models.FacebookPageLike.objects.create(user=user, page=page,
                                                                time=page_like_time)
         curr_page = http_get(next_page)
+    return redirect('results')
 
+def results(request):
     user = models.User.objects.get(id=request.session['user_id'])
 
     ## TODO : PUT THE LIKEDPAGES INTO THE MODEL ##
@@ -135,7 +106,10 @@ def results(request):
     context = RequestContext(request, {'username': user.name,
                                        'birthday': user.birthday.strftime('%d %B, %Y'),
                                        'pages_liked': user.liked_pages.all(),
-                                       'followed': user.followed_pages.all()})
+                                       'followed': user.followed_pages.all(),
+                                       'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
+                                       'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0})
+
     return HttpResponse(template.render(context))
 
 
@@ -167,7 +141,7 @@ BASE_API_URL = 'https://api.twitter.com/'
 def twitter(request):
     if not request.GET:
         # Getting a request token
-        hdr = {'oauth_callback': 'http://127.0.0.1:8080/twitter',
+        hdr = {'oauth_callback': 'http://localhost:8080/twitter',
                'oauth_consumer_key': CONSUMER_ID,  # consumer id
                'oauth_nonce': oauth_nonce(),  # nonce
                'oauth_signature_method': 'HMAC-SHA1',  # signature method
@@ -200,7 +174,7 @@ def twitter(request):
         request.session['tw_screen_name'] = token['screen_name']
         template = loader.get_template('results_ajax_tw.html')
         context = RequestContext(request, {})
-        #return redirect('twitter_results')
+        # return redirect('twitter_results')
         return HttpResponse(template.render(context))
 
 
@@ -224,19 +198,19 @@ def twitter_results(request):
         friends_params = {'count': 5000, 'cursor': cursor, 'screen_name': request.session['tw_screen_name']}
         url = 'https://api.twitter.com/1.1/friends/list.json?' + urllib.parse.urlencode(friends_params)
         hdr = {'oauth_consumer_key': CONSUMER_ID,  # consumer id
-                  'oauth_nonce': oauth_nonce(),  # nonce
-                   'oauth_signature_method': 'HMAC-SHA1',  # signature method
-                   'oauth_timestamp': oauth_timestamp(),  # timestamp
-                   'oauth_token': request.session['access_token'],  # access token
-                   'oauth_version': '1.0'}
+               'oauth_nonce': oauth_nonce(),  # nonce
+               'oauth_signature_method': 'HMAC-SHA1',  # signature method
+               'oauth_timestamp': oauth_timestamp(),  # timestamp
+               'oauth_token': request.session['access_token'],  # access token
+               'oauth_version': '1.0'}
         friends_params.update(hdr)
         signature = oauth_sign('GET',
-                                   twitter_api_url_format('1.1/friends/list.json'),
-                                   friends_params,
-                                   request.session['access_token_secret'])
+                               twitter_api_url_format('1.1/friends/list.json'),
+                               friends_params,
+                               request.session['access_token_secret'])
         hdr['oauth_signature'] = signature
         headers = (
-        'OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(hdr.items())))))
+            'OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(hdr.items())))))
         friends_request = urllib.request.Request(url)
         friends_request.add_header('Authorization', headers)
         friends = json.loads(urllib.request.urlopen(friends_request).read().decode('utf-8'))
@@ -250,12 +224,7 @@ def twitter_results(request):
                                                   tw_handle=f['screen_name'])
             follow = models.TwitterFollow.objects.create(user=user, page=page)
 
-    template = loader.get_template('likes.html')
-    context = RequestContext(request, {'username': user.name,
-                                       'birthday': '',
-                                           'pages_liked': user.liked_pages.all(),
-                                           'followed': user.followed_pages.all()})
-    return HttpResponse(template.render(context))
+    return redirect('results')
 
 
 '''
@@ -264,8 +233,6 @@ returns the header. Add the header to the HTTP request by
 
    request.add_header('Authorization', headers)
 '''
-
-
 def twitter_header(dict):
     return ('OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(dict.items())))))
 
