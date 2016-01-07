@@ -32,11 +32,19 @@
 <body>
 Name: {{ username }} <br>
 Birthday: {{ birthday }} <br>
+Facebook Likes: <br>
 <table>
 {% for like in pages_liked %}
-<tr><td>{{like.page.name}}</td><td>{{like.page.id}}</td><td>{{like.time}}</td></tr>
+<tr><td>{{like.page.name}}</td><td>{{like.page.fb_id}}</td></tr>
 {% endfor %}
 </table>
+Twitter Follows: <br>
+<table>
+{% for f in followed %}
+<tr><td>{{f.page.name}}</td><td>{{f.page.tw_handle}}</td></tr>
+{% endfor %}
+</table>
+
 <a class="btn btn-primary btn-social btn-twitter">
   <span class="fa fa-twitter"></span>
   Sign in with Twitter

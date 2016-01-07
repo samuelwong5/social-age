@@ -2,7 +2,6 @@ from django.contrib import admin
 
 from .models import *
 
-
 # Register your models here.
 class PageInline(admin.TabularInline):
     model = Page
@@ -27,5 +26,4 @@ class PageLikeAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Page, PageAdmin)
-admin.site.register(FacebookUser, UserAdmin)
-admin.site.register(FacebookPageLike, PageLikeAdmin)
+admin.site.register(User, UserAdmin)

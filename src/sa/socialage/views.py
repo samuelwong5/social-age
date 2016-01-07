@@ -84,28 +84,33 @@ def index(request):
             request.session['user'] = user
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
+        #return redirect('results')
         return HttpResponse(template.render(context))
 
 
 def results(request):
-    user = request.session['user']
+    fb_user = request.session['user']
     try:
-        facebook_user = models.FacebookUser.objects.get(id=user['id'])
-        # Clear previous FacebookPageLike objects associated with the FacebookUser
-        facebook_user.liked_pages.all().delete()
+        user_id = request.session.get('user_id', None)
+        if user_id:
+            user = models.User.objects.get(id=user_id)
+        else:
+            user = models.User.objects.get(fb_id=user['id'])
+        # Clear previous FacebookPageLike objects associated with the User
+        user.liked_pages.all().delete()
     except:
-        facebook_user = None
-    user_bday = timezone.make_aware(datetime.strptime(user['birthday'], '%m/%d/%Y'),
+        user = None
+    user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'),
                                     timezone.UTC())
-    if facebook_user is None:
-        facebook_user = models.FacebookUser.objects.create(id=user['id'], name=user['name'],
-                                                           birthday=user_bday)
+    if user is None:
+        user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'],
+                                          birthday=user_bday)
     else:
-        facebook_user.birthday = user_bday
-        facebook_user.save()
-
+        user.birthday = user_bday
+        user.save()
+    request.session['user_id'] = user.id
     # Retrieve pages liked
-    curr_page = facebook_api_get(user['id'] + '/likes/', {'access_token': request.session.get('access_token')})
+    curr_page = facebook_api_get(fb_user['id'] + '/likes/', {'access_token': request.session.get('access_token')})
     while curr_page.get('paging', False) and curr_page['paging'].get('next', False):
         next_page = curr_page['paging']['next']
         for p in curr_page['data']:
@@ -114,25 +119,23 @@ def results(request):
             except:
                 page = None
             if page is None:
-                page = models.Page.objects.create(id=uuid4(),
-                                                  name=p['name'],
+                page = models.Page.objects.create(name=p['name'],
                                                   fb_id=p['id'],
-                                                  fb_handle=p['name'],
-                                                  probs='0,0,0,0,0,0,0,0,0,0')
+                                                  fb_handle=p['name'])
             page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
-            page_like = models.FacebookPageLike.objects.create(user=facebook_user, page=page,
+            page_like = models.FacebookPageLike.objects.create(user=user, page=page,
                                                                time=page_like_time)
         curr_page = http_get(next_page)
-    liked_pages = {}
-    try:
-        facebook_user = models.FacebookUser.objects.get(id=request.session.get('user')['id'])
-        liked_pages = facebook_user.liked_pages.all()
-    except:
-        pass
+
+    user = models.User.objects.get(id=request.session['user_id'])
+
+    ## TODO : PUT THE LIKEDPAGES INTO THE MODEL ##
+
     template = loader.get_template('likes.html')
-    context = RequestContext(request, {'username': facebook_user.name,
-                                   'birthday': facebook_user.birthday.strftime('%d %B, %Y'),
-                                   'pages_liked': liked_pages})
+    context = RequestContext(request, {'username': user.name,
+                                       'birthday': user.birthday.strftime('%d %B, %Y'),
+                                       'pages_liked': user.liked_pages.all(),
+                                       'followed': user.followed_pages.all()})
     return HttpResponse(template.render(context))
 
 
@@ -158,50 +161,123 @@ def test(request):
 
 CONSUMER_ID = "u49f8lp426j6EPQfvANuIWmIp"
 CONSUMER_SECRET = "qDl3VJZ6KiIjiQxZN96QdopNRuLayIIPhdgqgkGdb4FMu4gffx"
-
 BASE_API_URL = 'https://api.twitter.com/'
-
-PARAM_STRING_FOR_REQUEST_TOKEN = 'oauth_callback=http%3A%2F%2Flocalhost%3A8080%2F&oauth_consumer_key={0}&oauth_nonce={1}&oauth_signature_method=HMAC-SHA1&oauth_timestamp={2}&oauth_version=1.0'
 
 
 def twitter(request):
-    # requesting a request token
-    request.session['callback'] = urllib.parse.quote(request.build_absolute_uri(), safe='')
-    nonce = oauth_nonce()
-    timestamp = oauth_timestamp()
-    signature = oauth_signature('POST', twitter_api_url_format('oauth/request_token'), nonce, timestamp,
-                                PARAM_STRING_FOR_REQUEST_TOKEN)
-    headers = ('Oauth ouath_callback="' + request.session['callback'] + '", '  # callback
-                                                                        'oauth_consumer_key="' + CONSUMER_ID + '", '  # consumer id
-                                                                                                               'oauth_nonce="' + nonce + '", '  # nonce
-                                                                                                                                         'oauth_signature="' + urllib.parse.quote(
-        signature, safe='') + '", '  # signature
-                              'oauth_signature_method="HMAC-SHA1", '  # signature method
-                              'oauth_timestamp="' + timestamp + '", '  # timestamp
-                                                                'oauth_version="1.0"')  # oauth version
-    token = twitter_api_post('oauth/request_token', headers)
-    # request.session['oauth_token']= token['oauth_token']
-    # request.session['oauth_token_secret']= token['oauth_token_secret']
+    if not request.GET:
+        # Getting a request token
+        hdr = {'oauth_callback': 'http://127.0.0.1:8080/twitter',
+               'oauth_consumer_key': CONSUMER_ID,  # consumer id
+               'oauth_nonce': oauth_nonce(),  # nonce
+               'oauth_signature_method': 'HMAC-SHA1',  # signature method
+               'oauth_timestamp': oauth_timestamp(),  # timestamp
+               'oauth_version': '1.0'}
+        signature = oauth_sign('POST', twitter_api_url_format('oauth/request_token'), hdr)
+        hdr['oauth_signature'] = signature
+        headers = twitter_header(hdr)
+        token = twitter_api_post('oauth/request_token', headers)
+        request.session['oauth_token'] = token['oauth_token']
+        request.session['oauth_token_secret'] = token['oauth_token_secret']
 
-    # authenticate users
-    # return redirect(twitter_api_url_format('oauth/authenticate', {'oauth_token': request.session['oauth_token']}))
-
-
-#  Parameter of oauth request
-def oauth_signature(method, url, nonce, timestamp, p_string, oauth_token=None, oauth_token_secret=None):
-    param_string = p_string.format(CONSUMER_ID, nonce, timestamp, oauth_token)
-    base_string = ('{0}&{1}&{2}'.format(method, urllib.parse.quote(url, safe=''),
-                                        urllib.parse.quote(param_string, safe=''))).encode()
-
-    # generate the signature key 
-    if oauth_token_secret == None:
-        signing_key = (CONSUMER_SECRET + '&').encode()
+        # Redirecting users to Twitter login page
+        return redirect(twitter_api_url_format('oauth/authenticate', {'oauth_token': request.session['oauth_token']}))
     else:
-        signing_key = (CONSUMER_SECRET + oauth_token_secret).encode()
+        # Exchange request token for access token
+        hdr = {'oauth_consumer_key': CONSUMER_ID,  # consumer id
+               'oauth_nonce': oauth_nonce(),  # nonce
+               'oauth_signature_method': 'HMAC-SHA1',  # signature method
+               'oauth_timestamp': oauth_timestamp(),  # timestamp
+               'oauth_token': request.session['oauth_token'],  # access token
+               'oauth_version': '1.0'}
+        signature = oauth_sign('POST', twitter_api_url_format('oauth/access_token'), hdr)
+        hdr['oauth_signature'] = signature
+        headers = twitter_header(hdr)
+        token = twitter_api_post('oauth/access_token', headers, {'oauth_verifier': request.GET.get("oauth_verifier")})
+        request.session['access_token'] = token['oauth_token']
+        request.session['access_token_secret'] = token['oauth_token_secret']
+        request.session['tw_id'] = token['user_id']
+        request.session['tw_screen_name'] = token['screen_name']
+        template = loader.get_template('results_ajax_tw.html')
+        context = RequestContext(request, {})
+        #return redirect('twitter_results')
+        return HttpResponse(template.render(context))
 
-    hashed = hmac.new(signing_key, base_string, hashlib.sha1)
-    sign = b64encode(hashed.digest())
-    return sign.decode()
+
+def twitter_results(request):
+    try:
+        user_id = request.session.get('user_id', None)
+        if user_id:
+            user = models.User.objects.get(id=user_id)
+        else:
+            user = models.User.objects.get(tw_id=request.session['tw_id'])
+        # Clear previous FacebookPageLike objects associated with the User
+        user.followed_pages.all().delete()
+    except:
+        user = models.User.objects.create(tw_id=request.session['tw_id'], name=request.session['tw_screen_name'])
+
+    request.session['user_id'] = user.id
+
+    # Get twitter follower/ids
+    cursor = -1
+    while cursor != 0:
+        friends_params = {'count': 5000, 'cursor': cursor, 'screen_name': request.session['tw_screen_name']}
+        url = 'https://api.twitter.com/1.1/friends/list.json?' + urllib.parse.urlencode(friends_params)
+        hdr = {'oauth_consumer_key': CONSUMER_ID,  # consumer id
+                  'oauth_nonce': oauth_nonce(),  # nonce
+                   'oauth_signature_method': 'HMAC-SHA1',  # signature method
+                   'oauth_timestamp': oauth_timestamp(),  # timestamp
+                   'oauth_token': request.session['access_token'],  # access token
+                   'oauth_version': '1.0'}
+        friends_params.update(hdr)
+        signature = oauth_sign('GET',
+                                   twitter_api_url_format('1.1/friends/list.json'),
+                                   friends_params,
+                                   request.session['access_token_secret'])
+        hdr['oauth_signature'] = signature
+        headers = (
+        'OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(hdr.items())))))
+        friends_request = urllib.request.Request(url)
+        friends_request.add_header('Authorization', headers)
+        friends = json.loads(urllib.request.urlopen(friends_request).read().decode('utf-8'))
+        cursor = friends['next_cursor']
+        for f in friends['users']:
+            try:
+                page = models.Page.objects.get(tw_id=f['id'])
+            except:
+                page = models.Page.objects.create(name=f['name'],
+                                                  tw_id=f['id'],
+                                                  tw_handle=f['screen_name'])
+            follow = models.TwitterFollow.objects.create(user=user, page=page)
+
+    template = loader.get_template('likes.html')
+    context = RequestContext(request, {'username': user.name,
+                                       'birthday': '',
+                                           'pages_liked': user.liked_pages.all(),
+                                           'followed': user.followed_pages.all()})
+    return HttpResponse(template.render(context))
+
+
+'''
+Takes a dictionary of key values required by the Twitter API and
+returns the header. Add the header to the HTTP request by
+
+   request.add_header('Authorization', headers)
+'''
+
+
+def twitter_header(dict):
+    return ('OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(dict.items())))))
+
+
+def oauth_sign(method, url, dict, oauth_token_secret=''):
+    base_string = '&'.join(list(map(lambda x: str(x[0]) + '=' + str(x[1]), sorted(dict.items()))))
+    signing_key = CONSUMER_SECRET + '&' + oauth_token_secret
+    base_string = '{0}&{1}&{2}'.format(method, urllib.parse.quote(url, safe=''),
+                                       urllib.parse.quote(base_string, safe=''))
+    hash = hmac.new(signing_key.encode(), base_string.encode(), hashlib.sha1)
+    sign = b64encode(hash.digest())
+    return urllib.parse.quote(sign.decode())
 
 
 def oauth_nonce():
@@ -213,7 +289,7 @@ def oauth_timestamp():
     return str(int(time.time()))
 
 
-# Contrust http requests
+# Construct http requests
 def twitter_api_url_format(url, params={}):
     if params == {}:
         return (BASE_API_URL + url)
@@ -221,10 +297,19 @@ def twitter_api_url_format(url, params={}):
         return '{0}{1}?{2}'.format(BASE_API_URL, url, urllib.parse.urlencode(params))
 
 
-def twitter_api_post(url, headers):
+def twitter_api_post(url, headers, data={}):
     url = twitter_api_url_format(url)
     req = urllib.request.Request(url)
     req.add_header('Authorization', headers)
-    request = urllib.request.urlopen(req, data=('').encode())
-    response = json.loads(request.read().decode("utf-8"))
-    return response
+    enc_data = urllib.parse.urlencode(data)
+    content_length = len(enc_data)
+    if content_length > 0:
+        req.add_header('Content-Length', content_length)
+        req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+    request = urllib.request.urlopen(req, enc_data.encode())
+    rep1 = request.read().decode('utf-8').split('&')
+    rep2 = {}
+    for i in rep1:
+        kv = i.split('=')
+        rep2[kv[0]] = kv[1]
+    return rep2
