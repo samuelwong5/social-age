@@ -16,6 +16,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.template import RequestContext, loader
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from . import models
 
@@ -54,7 +55,71 @@ def facebook(request):
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
         #return redirect('fb_results')
+        print({"user_id": request.session['user']['id'], "token": request.session['access_token']})
         return HttpResponse(template.render(context))
+
+'''
+Facebook API to get liked pages.
+
+POST request to /fb_api/ with access_token.
+
+Returns JSON containing a status value indicating
+error or success, an error_msg if and error has occured,
+the facebook user's name, birthday and id, and the list of
+liked pages.
+'''
+@csrf_exempt
+def fb_api(request):
+    access_token = request.POST.get('access_token', -1)
+    if access_token == -1:
+        return JsonResponse({"status": "error", "error_msg": "Missing access_token."})
+    fb_user = facebook_api_get('me', {'fields': 'id,name,birthday',
+                                           'access_token': access_token})
+    try:
+        user_id = request.session.get('user_id', None)
+        if user_id:
+            user = models.User.objects.get(id=user_id)
+        else:
+            user = models.User.objects.get(fb_id=fb_user['id'])
+        # Clear previous FacebookPageLike objects associated with the User
+        user.liked_pages.all().delete()
+    except:
+        user = None
+    try:
+        user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'),
+                                    timezone.UTC())
+        if user is None:
+            user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'],
+                                          birthday=user_bday)
+        else:
+            user.birthday = user_bday
+            user.save()
+    except:
+        if user is None:
+            user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'])
+
+    request.session['user_id'] = user.id
+
+    # Retrieve pages liked
+    curr_page = facebook_api_get(fb_user['id'] + '/likes/', {'access_token': access_token})
+    pages = []
+    while curr_page.get('paging', False) and curr_page['paging'].get('next', False):
+        next_page = curr_page['paging']['next']
+        for p in curr_page['data']:
+            try:
+                page = models.Page.objects.get(fb_id=p['id'])
+            except:
+                page = None
+            if page is None:
+                page = models.Page.objects.create(name=p['name'],
+                                                  fb_id=p['id'],
+                                                  fb_handle=p['name'])
+            page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
+            page_like = models.FacebookPageLike.objects.create(user=user, page=page,
+                                                               time=page_like_time)
+            pages.append({'id': p['id'], 'name': p['name'], 'time_liked': page_like_time})
+        curr_page = http_get(next_page)
+    return JsonResponse({"status": "success", "user": fb_user, "liked_pages": pages})
 
 
 def fb_results(request):
