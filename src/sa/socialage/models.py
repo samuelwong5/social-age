@@ -20,10 +20,10 @@ class User(models.Model):
 
 class Page(models.Model):
     id = models.CharField(primary_key=True, max_length=100, unique=True, blank=True, default=char_uuid4)
-    name = models.CharField(max_length=100)
-    fb_id = models.CharField(max_length=30)
+    name = models.CharField(max_length=100, default='NAME_NOT_FOUND')
+    fb_id = models.CharField(max_length=30, default='FACEBOOK_PAGE_NOT_FOUND')
     tw_id = models.CharField(max_length=30)
-    fb_handle = models.CharField(max_length=100)
+    fb_handle = models.CharField(max_length=100, default='FACEBOOK_PAGE_NOT_FOUND')
     tw_handle = models.CharField(max_length=100)
     ageUnder12 = models.FloatField(default=0)
     age12to13 = models.FloatField(default=0)
@@ -38,7 +38,7 @@ class Page(models.Model):
     total = models.FloatField(default=0)
 
     def __str__(self):
-        return self.name
+        return self.tw_handle
 
 
 class FacebookPageLike(models.Model):

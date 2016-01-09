@@ -8,6 +8,11 @@ TEST_IDS = ["813286", "15846407"]
 def predict(test_ids, network, limit_search=True, debug=False):
     """
     Predict user's social age using Naive Bayes classifier
+    Calculating P(page1,page2,...pagen|agegroup) * P(agegroup)
+    which under assumption that liking different pages are independent(clearly false but necessary
+    for efficiency) = P(page1|agegroup)*P(page2|ageggroup)*...*P(pagen|agegroup)*P(agegroup)
+    and using the normalized value of this to determine his probability to belong to each respective
+    age gorup.
     :param test_ids: ids of pages the user liked
     :param limit_search: if setted true, limit search to top 1000 entries, else search through all.
     :param network: string 'fb' or 'tw'(facebook or twitter)
@@ -45,7 +50,7 @@ def predict(test_ids, network, limit_search=True, debug=False):
 def extract_prob(test_stars):
     """
     :param test_stars: pages to be tested
-    :return: probabilities of different age groups given the pages P(agegroup|page) in a np.ndarray
+    :return: probabilities of different age groups given the pages P(page|agegroup) in a np.ndarray
     """
 
     freq = np.empty(shape=(test_stars.count(), 10), dtype=float)
