@@ -17,6 +17,8 @@ def run():
     freqReader = csv.DictReader(freq)
     count = 0
     for row in freqReader:
+        if count >= 2000:
+            break
         count += 1
         f = lambda x: float(x)
         ageUnder12 = f(row['under 12'])
