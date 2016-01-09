@@ -42,12 +42,12 @@ class Page(models.Model):
 
     def prob(self):
         if self.total == 0:
-            return self.tw_id + ': None'
+            return -1
         age_prob = [self.ageUnder12, self.age12to13, self.age14to15, self.age16to17, self.age18to24,
                     self.age25to34, self.age35to44, self.age45to54, self.age55to64]
         age_prob = map(lambda x: x / (self.total - self.ageAbove65), age_prob)
         age_groups = [10, 12.5, 14.5, 16.5, 21, 30, 40, 50, 60]
-        return self.tw_handle + ': ' + str(sum(map(lambda x,y:x*y,age_prob, age_groups)))
+        return round(sum(map(lambda x,y:x*y,age_prob, age_groups)),1)
 
 
 class FacebookPageLike(models.Model):

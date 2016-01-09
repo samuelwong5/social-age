@@ -50,6 +50,7 @@ def facebook(request):
                                       'client_secret': APP_SECRET,
                                       'code': request.GET.get("code")})
             request.session['access_token'] = token['access_token']
+            print(request.session['access_token'])
             # Get Facebook user id
             user = facebook_api_get('me', {'fields': 'id,name,birthday',
                                            'access_token': request.session.get('access_token')})
