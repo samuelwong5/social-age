@@ -170,7 +170,7 @@ def results(request):
     user = models.User.objects.get(id=request.session['user_id'])
 
     age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())),'fb')
-
+    print(age)
     template = loader.get_template('likes.html')
     context = RequestContext(request, {'username': user.name,
                                        'birthday': user.birthday.strftime('%d %B, %Y'),
