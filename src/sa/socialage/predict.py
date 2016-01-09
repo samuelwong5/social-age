@@ -65,7 +65,6 @@ def extract_prob(test_stars):
     i = 0
     total = 0
     for s in test_stars:
-        print(s.tw_handle + str(s.prob()))
         prob[i][0] += s.ageUnder12
         prob[i][1] += s.age12to13
         prob[i][2] += s.age14to15

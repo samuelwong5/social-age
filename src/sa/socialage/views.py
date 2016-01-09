@@ -1,5 +1,6 @@
 import csv
 import hmac
+import math
 import time
 import random
 import string
@@ -57,8 +58,8 @@ def facebook(request):
             request.session['user'] = user
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
-        #return redirect('fb_results')
-        return HttpResponse(template.render(context))
+        return redirect('fb_results')
+        #eturn HttpResponse(template.render(context))
 
 '''
 Facebook API to get liked pages.
@@ -164,20 +165,51 @@ def fb_results(request):
             page_like = models.FacebookPageLike.objects.create(user=user, page=page,
                                                                time=page_like_time)
         curr_page = http_get(next_page)
+
+    # Retrieve friends
+    friends = facebook_api_get('me/friends', {'access_token': request.session.get('access_token')})
+    friend_ids = list(map(lambda x: x['id'], friends['data']))
+    user.fb_friends = ','.join(friend_ids)
+    user.save()
+
     return redirect('results')
 
+
 def results(request):
-    user = models.User.objects.get(id=request.session['user_id'])
+    user_id = request.GET.get('id', 0)
+    if user_id == 0:
+        user_id = request.session['user_id']
+    user = models.User.objects.get(id=user_id)
+    if user is None:
+        return redirect('index')
 
     age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())),'fb')
-    
+    if math.isnan(age):
+        age = -1
+    else:
+        age = math.round(age)
+        user.social_age = age
+        user.save()
+
+    friend_ids = user.fb_friends
+    friends = []
+    for id in friend_ids.split(','):
+        try:
+            friend = models.User.objects.get(fb_id=id)
+            friends.append(friend)
+        except:
+            pass
+
     template = loader.get_template('likes.html')
     context = RequestContext(request, {'username': user.name,
                                        'birthday': user.birthday.strftime('%d %B, %Y'),
                                        'pages_liked': user.liked_pages.all(),
                                        'followed': user.followed_pages.all(),
                                        'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
-                                       'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0})
+                                       'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0,
+                                       'social_age': age,
+                                       'user_id': user_id,
+                                       'friends': friends})
 
     return HttpResponse(template.render(context))
 

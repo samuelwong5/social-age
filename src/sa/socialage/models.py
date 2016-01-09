@@ -8,12 +8,13 @@ def char_uuid4():
 
 
 class User(models.Model):
-    id = models.CharField(primary_key=True, max_length=100, blank=True, unique=True, default=char_uuid4)
-    fb_id = models.CharField(max_length=60)
-    tw_id = models.CharField(max_length=60)
+    id = models.AutoField(primary_key=True, unique=True)
+    fb_id = models.CharField(max_length=60, default=-1)
+    tw_id = models.CharField(max_length=60, default=-1)
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(default=datetime.now)
-
+    social_age = models.IntegerField(default=0)
+    fb_friends = models.CommaSeparatedIntegerField(max_length=100)
     def __str__(self):
         return self.name
 

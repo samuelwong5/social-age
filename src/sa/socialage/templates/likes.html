@@ -75,5 +75,16 @@ Birthday: {{ birthday }} <br>
         Sign in with Twitter
     </a>
 {% endif %}
+
+<h2>Friends</h2> <br>
+<table>
+    {% for f in friends %}
+        <tr>
+            <td>{{ f.name }}</td>
+            <td>{{ f.social_age }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
 </body>
 </html>
