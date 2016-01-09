@@ -2,8 +2,10 @@ from django.db import models
 from datetime import datetime
 from uuid import uuid4
 
+
 def char_uuid4():
     return str(uuid4())
+
 
 class User(models.Model):
     id = models.CharField(primary_key=True, max_length=100, blank=True, unique=True, default=char_uuid4)
@@ -11,6 +13,9 @@ class User(models.Model):
     tw_id = models.CharField(max_length=60)
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(default=datetime.now)
+
+    def __str__(self):
+        return self.name
 
 
 class Page(models.Model):
@@ -32,11 +37,18 @@ class Page(models.Model):
     ageAbove65 = models.FloatField(default=0)
     total = models.FloatField(default=0)
 
+    def __str__(self):
+        return self.name
+
 
 class FacebookPageLike(models.Model):
     user = models.ForeignKey(User, related_name='liked_pages')
     page = models.ForeignKey(Page, related_name='likes')
     time = models.DateTimeField('date_liked')
+
+    def __str__(self):
+        return u'%s,%s' % (self.user.name, self.page.name)
+
 
 class TwitterFollow(models.Model):
     user = models.ForeignKey(User, related_name='followed_pages')
