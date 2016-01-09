@@ -18,7 +18,7 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class PageAdmin(admin.ModelAdmin):
-    list_display = ('name', 'id')
+    list_display = ('name', 'tw_handle', 'total', 'id')
 
 
 class PageLikeAdmin(admin.ModelAdmin):

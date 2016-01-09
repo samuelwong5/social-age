@@ -11,12 +11,12 @@ twitter page.
 
 def run():
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
-    freq = codecs.open('E:/Users/jasper/Desktop/social_age/src/sa/socialage/fixtures/star_age_frequencies.csv', 'r', 'utf-8')
+    fpath = 'E:/Users/jasper/Desktop/social_age/src/sa/socialage/fixtures/star_age_frequencies.csv'
+    lpath = 'E:/Users/jasper/Desktop/social_age/src/sa/socialage/fixtures/fb_twitter_lookup.csv'
+    freq = codecs.open(fpath, 'r', 'utf-8')
     freqReader = csv.DictReader(freq)
     count = 0
     for row in freqReader:
-        if count >= 5000:
-            break
         count += 1
         f = lambda x: float(x)
         ageUnder12 = f(row['under 12'])
@@ -32,7 +32,7 @@ def run():
         total = f(row['total'])
         tw_id = row['network_id']
         tw_handle = row['twitter_handle']
-        print('Reading page ' + str(count))
+        print('Reading page ' + str(count) + ":" + tw_handle)
         page = Page.objects.create(tw_id=tw_id,
                                    tw_handle=tw_handle,
                                    ageUnder12=ageUnder12,
@@ -49,21 +49,23 @@ def run():
                                    )
         page.save()
 
-    lookup = codecs.open('E:/Users/jasper/Desktop/social_age/src/sa/socialage/fixtures/fb_twitter_lookup.csv', 'r', 'utf-8')
+    lookup = codecs.open(lpath, 'r', 'utf-8')
     r = csv.DictReader(lookup)
 
     print('Looking for corresponding twitter entries in fb_twitter_lookup.csv...')
     for row in r:
         if row['network'] == 'twitter':
+                print('(twitter) Looking at row with star_name:' + row['star_name'])
                 pages = Page.objects.filter(tw_id=row['id'])
                 pages.update(name=row['star_name'])
 
     print('Looking for corresponding facebook entries in fb_twitter_lookup.csv...')
-    lookup = codecs.open('E:/Users/jasper/Desktop/social_age/src/sa/socialage/fixtures/fb_twitter_lookup.csv', 'r', 'utf-8')
+    lookup = codecs.open(lpath, 'r', 'utf-8')
     r = csv.DictReader(lookup)
 
     for row in r:
         if row['network'] == 'facebook':
+                print('(facebook) Looking at row with star_name:' + row['star_name'])
                 pages = Page.objects.filter(name=row['star_name'])
                 pages.update(fb_id=row['id'], fb_handle=row['handle'])
 

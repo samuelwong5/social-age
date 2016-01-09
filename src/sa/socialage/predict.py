@@ -1,7 +1,9 @@
 import numpy as np
 from .models import Page
 
+# Precomputed prior distribution (P(agegroup))
 PRIOR = np.array([0.008, 0.02, 0.029, 0.023, 0.14, 0.23, 0.22, 0.23, 0.06, 0.04])
+# For debugging
 TEST_IDS = ["813286", "15846407"]
 
 
