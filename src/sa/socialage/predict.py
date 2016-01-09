@@ -49,8 +49,9 @@ def predict(test_ids, network, debug=False):
     # Normalize
     total = np.sum(age_prob)
     age_prob = age_prob / total
-    age = age_prob[0]*10 + age_prob[1]*12.5 + age_prob[2]*14.5 + age_prob[3]*16.5 + age_prob[4]*21 + age_prob[5]*29.5 + age_prob[6]*39.5 + age_prob[7]*49.5 + age_prob[8]*59.5 + age_prob[9]*70
-    return age
+    age_groups = [10, 12.5, 14.5, 16.5, 21, 30, 40, 50, 60, 0]
+    return sum(map(lambda x,y:x*y,age_prob.tolist(), age_groups))
+
 
 
 def extract_prob(test_stars):
@@ -59,25 +60,27 @@ def extract_prob(test_stars):
     :return: probabilities of different age groups given the pages P(page|agegroup) in a np.ndarray
     """
 
-    prob = np.empty(shape=(len(test_stars), 10), dtype=float)
+
+    prob = np.zeros(shape=(1, 10), dtype=float)
     i = 0
+    total = 0
     for s in test_stars:
-        prob[i][0] = s.ageUnder12
-        prob[i][1] = s.age12to13
-        prob[i][2] = s.age14to15
-        prob[i][3] = s.age16to17
-        prob[i][4] = s.age18to24
-        prob[i][5] = s.age25to34
-        prob[i][6] = s.age35to44
-        prob[i][7] = s.age45to54
-        prob[i][8] = s.age55to64
-        prob[i][9] = s.ageAbove65
+        prob[i][0] += s.ageUnder12
+        prob[i][1] += s.age12to13
+        prob[i][2] += s.age14to15
+        prob[i][3] += s.age16to17
+        prob[i][4] += s.age18to24
+        prob[i][5] += s.age25to34
+        prob[i][6] += s.age35to44
+        prob[i][7] += s.age45to54
+        prob[i][8] += s.age55to64
+        #prob[i][9] += 0
         # m-estimates, equivalent sample size m = 10, adding m virtual samples
         # according to PRIOR
-        m = 10
-        for k in list(range(10)):
-            prob[i, k] = (prob[i, k] + m * PRIOR[k]) / (s.total + m)
-        i += 1
+        total += s.total - s.ageAbove65
+
+    for k in range(10):
+        prob[0][k] /= total
     return prob
 
 

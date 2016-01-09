@@ -19,6 +19,8 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from . import models
+from . import predict
+
 
 APP_ID = 507982369367860
 APP_SECRET = "213bdd72e269941abce42d09f8908765"
@@ -55,7 +57,6 @@ def facebook(request):
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
         #return redirect('fb_results')
-        print({"user_id": request.session['user']['id'], "token": request.session['access_token']})
         return HttpResponse(template.render(context))
 
 '''
@@ -117,9 +118,11 @@ def fb_api(request):
             page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
             page_like = models.FacebookPageLike.objects.create(user=user, page=page,
                                                                time=page_like_time)
-            pages.append({'id': p['id'], 'name': p['name'], 'time_liked': page_like_time})
+            pages.append({'id': p['id'], 'name': p['name'], 'time_liked': page_like_time, 'average_age': page.prob()})
         curr_page = http_get(next_page)
-    return JsonResponse({"status": "success", "user": fb_user, "liked_pages": pages})
+
+    age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())),'fb')
+    return JsonResponse({"status": "success", "user": fb_user, "liked_pages": pages, "social_age": round(age)})
 
 
 def fb_results(request):
@@ -165,7 +168,7 @@ def fb_results(request):
 def results(request):
     user = models.User.objects.get(id=request.session['user_id'])
 
-    ## TODO : PUT THE LIKEDPAGES INTO THE MODEL ##
+    age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())),'fb')
 
     template = loader.get_template('likes.html')
     context = RequestContext(request, {'username': user.name,
