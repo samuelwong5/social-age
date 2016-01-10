@@ -21,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from . import models
 from . import predict
-
+from .api import *
 
 APP_ID = 507982369367860
 APP_SECRET = "213bdd72e269941abce42d09f8908765"
@@ -59,72 +59,7 @@ def facebook(request):
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
         return redirect('fb_results')
-        #eturn HttpResponse(template.render(context))
-
-'''
-Facebook API to get liked pages.
-
-POST request to /fb_api/ with access_token.
-
-Returns JSON containing a status value indicating
-error or success, an error_msg if and error has occured,
-the facebook user's name, birthday and id, and the list of
-liked pages.
-'''
-@csrf_exempt
-def fb_api(request):
-    access_token = request.POST.get('access_token', -1)
-    if access_token == -1:
-        return JsonResponse({"status": "error", "error_msg": "Missing access_token."})
-    fb_user = facebook_api_get('me', {'fields': 'id,name,birthday',
-                                           'access_token': access_token})
-    try:
-        user_id = request.session.get('user_id', None)
-        if user_id:
-            user = models.User.objects.get(id=user_id)
-        else:
-            user = models.User.objects.get(fb_id=fb_user['id'])
-        # Clear previous FacebookPageLike objects associated with the User
-        user.liked_pages.all().delete()
-    except:
-        user = None
-    try:
-        user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'),
-                                    timezone.UTC())
-        if user is None:
-            user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'],
-                                          birthday=user_bday)
-        else:
-            user.birthday = user_bday
-            user.save()
-    except:
-        if user is None:
-            user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'])
-
-    request.session['user_id'] = user.id
-
-    # Retrieve pages liked
-    curr_page = facebook_api_get(fb_user['id'] + '/likes/', {'access_token': access_token})
-    pages = []
-    while curr_page.get('paging', False) and curr_page['paging'].get('next', False):
-        next_page = curr_page['paging']['next']
-        for p in curr_page['data']:
-            try:
-                page = models.Page.objects.get(fb_id=p['id'])
-            except:
-                page = None
-            if page is None:
-                page = models.Page.objects.create(name=p['name'],
-                                                  fb_id=p['id'],
-                                                  fb_handle=p['name'])
-            page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
-            page_like = models.FacebookPageLike.objects.create(user=user, page=page,
-                                                               time=page_like_time)
-            pages.append({'id': p['id'], 'name': p['name'], 'time_liked': page_like_time, 'average_age': page.prob()})
-        curr_page = http_get(next_page)
-
-    age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())),'fb')
-    return JsonResponse({"status": "success", "user": fb_user, "liked_pages": pages, "social_age": round(age)})
+        # eturn HttpResponse(template.render(context))
 
 
 def fb_results(request):
@@ -183,7 +118,7 @@ def results(request):
     if user is None:
         return redirect('index')
 
-    age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())),'fb')
+    age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())), 'fb')
     if math.isnan(age):
         age = -1
     else:
@@ -212,31 +147,6 @@ def results(request):
                                        'friends': friends})
 
     return HttpResponse(template.render(context))
-
-
-def facebook_api_url_format(url, params={}):
-    return '{0}{1}?{2}'.format(FACEBOOK_GRAPH_BASE_URI, url, urllib.parse.urlencode(params))
-
-
-def facebook_api_get(url, params={}):
-    return http_get(facebook_api_url_format(url, params))
-
-
-def http_get(url):
-    request = urllib.request.urlopen(url)
-    response = json.loads(request.read().decode("utf-8"))
-    return response
-
-
-def test(request):
-    return JsonResponse({})
-
-
-# ==========================================twitter API=============================================
-
-CONSUMER_ID = "u49f8lp426j6EPQfvANuIWmIp"
-CONSUMER_SECRET = "qDl3VJZ6KiIjiQxZN96QdopNRuLayIIPhdgqgkGdb4FMu4gffx"
-BASE_API_URL = 'https://api.twitter.com/'
 
 
 def twitter(request):
@@ -329,55 +239,68 @@ def twitter_results(request):
 
 
 '''
-Takes a dictionary of key values required by the Twitter API and
-returns the header. Add the header to the HTTP request by
+Facebook API to get liked pages.
 
-   request.add_header('Authorization', headers)
+POST request to /fb_api/ with access_token.
+
+Returns JSON containing a status value indicating
+error or success, an error_msg if and error has occured,
+the facebook user's name, birthday and id, and the list of
+liked pages.
 '''
-def twitter_header(dict):
-    return ('OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(dict.items())))))
 
 
-def oauth_sign(method, url, dict, oauth_token_secret=''):
-    base_string = '&'.join(list(map(lambda x: str(x[0]) + '=' + str(x[1]), sorted(dict.items()))))
-    signing_key = CONSUMER_SECRET + '&' + oauth_token_secret
-    base_string = '{0}&{1}&{2}'.format(method, urllib.parse.quote(url, safe=''),
-                                       urllib.parse.quote(base_string, safe=''))
-    hash = hmac.new(signing_key.encode(), base_string.encode(), hashlib.sha1)
-    sign = b64encode(hash.digest())
-    return urllib.parse.quote(sign.decode())
+@csrf_exempt
+def fb_api(request):
+    access_token = request.POST.get('access_token', -1)
+    if access_token == -1:
+        return JsonResponse({"status": "error", "error_msg": "Missing access_token."})
+    fb_user = facebook_api_get('me', {'fields': 'id,name,birthday',
+                                      'access_token': access_token})
+    try:
+        user_id = request.session.get('user_id', None)
+        if user_id:
+            user = models.User.objects.get(id=user_id)
+        else:
+            user = models.User.objects.get(fb_id=fb_user['id'])
+        # Clear previous FacebookPageLike objects associated with the User
+        user.liked_pages.all().delete()
+    except:
+        user = None
+    try:
+        user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'),
+                                        timezone.UTC())
+        if user is None:
+            user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'],
+                                              birthday=user_bday)
+        else:
+            user.birthday = user_bday
+            user.save()
+    except:
+        if user is None:
+            user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'])
 
+    request.session['user_id'] = user.id
 
-def oauth_nonce():
-    random_string = ''.join(list((random.choice(string.ascii_letters + string.digits)) for i in range(32)))
-    return random_string
+    # Retrieve pages liked
+    curr_page = facebook_api_get(fb_user['id'] + '/likes/', {'access_token': access_token})
+    pages = []
+    while curr_page.get('paging', False) and curr_page['paging'].get('next', False):
+        next_page = curr_page['paging']['next']
+        for p in curr_page['data']:
+            try:
+                page = models.Page.objects.get(fb_id=p['id'])
+            except:
+                page = None
+            if page is None:
+                page = models.Page.objects.create(name=p['name'],
+                                                  fb_id=p['id'],
+                                                  fb_handle=p['name'])
+            page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
+            page_like = models.FacebookPageLike.objects.create(user=user, page=page,
+                                                               time=page_like_time)
+            pages.append({'id': p['id'], 'name': p['name'], 'time_liked': page_like_time, 'average_age': page.prob()})
+        curr_page = http_get(next_page)
 
-
-def oauth_timestamp():
-    return str(int(time.time()))
-
-
-# Construct http requests
-def twitter_api_url_format(url, params={}):
-    if params == {}:
-        return (BASE_API_URL + url)
-    else:
-        return '{0}{1}?{2}'.format(BASE_API_URL, url, urllib.parse.urlencode(params))
-
-
-def twitter_api_post(url, headers, data={}):
-    url = twitter_api_url_format(url)
-    req = urllib.request.Request(url)
-    req.add_header('Authorization', headers)
-    enc_data = urllib.parse.urlencode(data)
-    content_length = len(enc_data)
-    if content_length > 0:
-        req.add_header('Content-Length', content_length)
-        req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-    request = urllib.request.urlopen(req, enc_data.encode())
-    rep1 = request.read().decode('utf-8').split('&')
-    rep2 = {}
-    for i in rep1:
-        kv = i.split('=')
-        rep2[kv[0]] = kv[1]
-    return rep2
+    age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())), 'fb')
+    return JsonResponse({"status": "success", "user": fb_user, "liked_pages": pages, "social_age": round(age)})
