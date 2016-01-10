@@ -3,6 +3,8 @@ from django.contrib import admin
 from .models import *
 
 # Register your models here.
+
+
 class PageInline(admin.TabularInline):
     model = Page
     list_display = ('name', 'id')
@@ -18,7 +20,7 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class PageAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tw_handle', 'total', 'id')
+    list_display = ('name', 'tw_handle', 'fb_handle', 'total')
 
 
 class PageLikeAdmin(admin.ModelAdmin):

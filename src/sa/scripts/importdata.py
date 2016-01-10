@@ -17,7 +17,7 @@ def run():
     freqReader = csv.DictReader(freq)
     count = 0
     for row in freqReader:
-        if count >= 2000:
+        if count >= 5000:
             break
         count += 1
         f = lambda x: float(x)

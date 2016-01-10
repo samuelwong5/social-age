@@ -15,6 +15,7 @@ class User(models.Model):
     birthday = models.DateTimeField(default=datetime.now)
     social_age = models.IntegerField(default=0)
     fb_friends = models.CommaSeparatedIntegerField(max_length=100)
+
     def __str__(self):
         return self.name
 
@@ -39,9 +40,12 @@ class Page(models.Model):
     total = models.FloatField(default=0)
 
     def __str__(self):
-        return self.tw_handle
+        if self.tw_handle != '':
+            return self.tw_handle
+        else:
+            return self.fb_handle
 
-    def prob(self):
+    def avg_age(self):
         if self.total == 0:
             return -1
         age_prob = [self.ageUnder12, self.age12to13, self.age14to15, self.age16to17, self.age18to24,
