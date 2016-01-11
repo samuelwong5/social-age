@@ -1,0 +1,67 @@
+
+<div id="page-wrapper">
+        <div id="page-inner">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3>Welcome <b>{{ username }}</b> , here are the results you've been waiting for: </h3>
+                </div>
+            </div>
+            <!-- /. ROW  -->
+            <hr/>
+            <div class="row">
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading"><h3><i
+                                class="fa fa-meh-o"></i> Social Age
+                        </h3>
+                        </div>
+                        <div class="panel-body">
+                            <div id="gauge1" style="position:width:400px; height:320px"></div>
+
+                            <hr>
+                            <a tabindex="0" class="btn btn-lg btn-info" role="button" data-toggle="popover"
+                               data-trigger="focus" title="Social age"
+                               data-content="Social age defines the age group that you are behaving like."><i
+                                    class="fa fa-question-circle fa-2x"></i></a>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="panel panel-back noti-box">
+                <span class="icon-box bg-color-blue set-icon">
+                    <i class="fa fa-comment"></i>
+                </span>
+
+                        <div class="text-box">
+                            <p>
+
+                            <h3>Your actual age is : {{ age }}</h3></p>
+                            <p>Some comments generated based
+                                on the difference between social and actual age</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /. ROW  -->
+            <hr/>
+
+        </div>
+        <!-- /. PAGE INNER  -->
+    </div>
+
+<script>
+    $('[data-toggle="tooltip"]').tooltip({'placement': 'right'});
+    $('[data-toggle="popover"]').popover({'placement': 'right'});
+</script>
+<script>
+    var g = new JustGage({
+        id: "gauge1",
+        value: {{ social_age }},
+        min: 0,
+        max: 100,
+        levelColors: ["#ff0000"],
+        title: "Social Age"
+    });
+</script>

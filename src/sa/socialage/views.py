@@ -9,6 +9,7 @@ from base64 import b64encode
 from uuid import uuid4
 
 from datetime import datetime
+from datetime import date, timedelta
 import json
 import urllib.request
 import urllib.parse
@@ -58,8 +59,8 @@ def facebook(request):
             request.session['user'] = user
         template = loader.get_template('results_ajax.html')
         context = RequestContext(request, {})
-        return redirect('fb_results')
-        # eturn HttpResponse(template.render(context))
+        #return redirect('fb_results')
+        return HttpResponse(template.render(context))
 
 
 def fb_results(request):
@@ -117,12 +118,11 @@ def results(request):
     user = models.User.objects.get(id=user_id)
     if user is None:
         return redirect('index')
-
     age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())), 'fb')
     if math.isnan(age):
-        age = -1
+        age = -2
     else:
-        age = math.round(age)
+        age = round(age)
         user.social_age = age
         user.save()
 
@@ -135,9 +135,10 @@ def results(request):
         except:
             pass
 
-    template = loader.get_template('likes.html')
+    template = loader.get_template('result_content.html')
     context = RequestContext(request, {'username': user.name,
                                        'birthday': user.birthday.strftime('%d %B, %Y'),
+                                       'age': int((date.today() - user.birthday.date()).days / 365.2425),
                                        'pages_liked': user.liked_pages.all(),
                                        'followed': user.followed_pages.all(),
                                        'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
@@ -183,7 +184,7 @@ def twitter(request):
         request.session['access_token_secret'] = token['oauth_token_secret']
         request.session['tw_id'] = token['user_id']
         request.session['tw_screen_name'] = token['screen_name']
-        template = loader.get_template('results_ajax_tw.html')
+        template = loader.get_template('result_test.html')
         context = RequestContext(request, {})
         # return redirect('twitter_results')
         return HttpResponse(template.render(context))

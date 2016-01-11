@@ -21,6 +21,7 @@ def predict(test_ids, network, debug=False):
     :param network: string 'fb' or 'tw'(facebook or twitter)
     :return: predicted age.
     """
+    print(test_ids)
     if debug:
         test_ids = TEST_IDS
         network = 'tw'
