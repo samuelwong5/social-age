@@ -57,8 +57,8 @@ def facebook(request):
             user = facebook_api_get('me', {'fields': 'id,name,birthday',
                                            'access_token': request.session.get('access_token')})
             request.session['user'] = user
-        template = loader.get_template('results_ajax.html')
-        context = RequestContext(request, {})
+        template = loader.get_template('result_test.html')
+        context = RequestContext(request, {'api':'fb'})
         #return redirect('fb_results')
         return HttpResponse(template.render(context))
 
@@ -125,7 +125,16 @@ def results(request):
         age = round(age)
         user.social_age = age
         user.save()
+    '''print(age)
 
+    for i in user.liked_pages.all():
+        a = i.page.avg_age()
+        if a > 0:
+            try:
+                print('{0}: {1}'.format(i.page.name, a))
+            except:
+                pass
+    '''
     friend_ids = user.fb_friends
     friends = []
     for id in friend_ids.split(','):
@@ -185,7 +194,7 @@ def twitter(request):
         request.session['tw_id'] = token['user_id']
         request.session['tw_screen_name'] = token['screen_name']
         template = loader.get_template('result_test.html')
-        context = RequestContext(request, {})
+        context = RequestContext(request, {'api':'tw'})
         # return redirect('twitter_results')
         return HttpResponse(template.render(context))
 
