@@ -29,7 +29,7 @@ FACEBOOK_GRAPH_BASE_URI = 'https://graph.facebook.com/v2.5/'
 
 
 def index(request):
-    template = loader.get_template('index.html')
+    template = loader.get_template('index_test.html')
     context = RequestContext(request, {})
     return HttpResponse(template.render(context))
 
