@@ -37,9 +37,8 @@ def predict(test_ids_fb, test_ids_tw, debug=False):
     test_stars_fb = pages.filter(fb_id__in=test_ids_fb, total__gte=20)
     test_stars_tw = pages.filter(tw_id__in=test_ids_tw, total__gte=20)
     test_stars = test_stars_fb | test_stars_tw
-
-    print("Number of test_stars:")
-    print(len(test_stars))
+    print("test_stars:")
+    print(test_stars)
     # if the amount of test_stars is less than MIN_TESTSTARS,
     # return -1 and tell user that the pages they provided are
     # insufficient to compute an accurate social age
@@ -81,8 +80,7 @@ def extract_prob(test_stars):
     totals = [f('ageUnder12'), f('age12to13'), f('age14to15'), f('age16to17'), f('age18to24'),
               f('age25to34'), f('age35to44'), f('age45to54'), f('age55to64'), f('ageAbove65')]
 
-
-    #
+    # (f + 1) / (F + 10)
     for s in test_stars:
         prob[i][0] += s.ageUnder12
         prob[i][1] += s.age12to13
@@ -102,7 +100,13 @@ def extract_prob(test_stars):
 
 
 def page_avg_age(page):
+    # Calculate the page average age based on single star posterior.
     prob = extract_prob([page])[0]
     prob /= sum(prob)
     age_groups = [10, 12.5, 14.5, 16.5, 21, 30, 40, 50, 60, 70]
     return round(sum(map(lambda x, y: x * y, prob.tolist(), age_groups)))
+
+
+# def recommend(user_age):
+    # Recommend 5 pages based on user's actual age or social age
+    # Return the 5 pages with most samples and same/similar page_avg_age as user_age.

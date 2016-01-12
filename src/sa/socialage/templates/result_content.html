@@ -1,67 +1,71 @@
-
 <div id="page-wrapper">
-        <div id="page-inner">
-            <div class="row">
-                <div class="col-md-12">
-                    <h3>Welcome <b>{{ username }}</b> , here are the results you've been waiting for: </h3>
-                </div>
+    <div id="page-inner">
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Welcome <b>{{ username }}</b> , here are the results you've been waiting for: </h3>
             </div>
-            <!-- /. ROW  -->
-            <hr/>
-            <div class="row">
-                <div class="col-md-6 col-sm-12 col-xs-12">
-                    <div class="panel panel-primary">
-                        <div class="panel-heading"><h3><i
-                                class="fa fa-meh-o"></i> Social Age
-                        </h3>
-                        </div>
-                        <div class="panel-body">
-                            <div id="gauge1" style="position:width:400px; height:320px"></div>
+        </div>
+        <!-- /. ROW  -->
+        <hr/>
+        <div class="row">
+            <div class="col-md-6 col-sm-12 col-xs-12">
+                <div class="panel panel-primary text-center no-boder bg-color-red">
+                    <div class="panel-body">
+                        <i class="fa fa-heartbeat fa-5x"></i>
 
-                            <hr>
-                            <a tabindex="0" class="btn btn-lg btn-info" role="button" data-toggle="popover"
-                               data-trigger="focus" title="Social age"
-                               data-content="Social age defines the age group that you are behaving like."><i
-                                    class="fa fa-question-circle fa-2x"></i></a>
+                        <h3>{{ age }}</h3>
+                    </div>
+                    <div class="panel-footer back-footer-red">
+                        Biological age
 
-                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-md-6 col-sm-12 col-xs-12">
-                    <div class="panel panel-back noti-box">
+            <div class="col-md-6 col-sm-12 col-xs-12">
+                <div class="panel panel-primary text-center no-boder bg-color-green">
+                    <div class="panel-body">
+                        <i class="fa fa-users fa-5x"></i>
+
+                        <h3>{{ social_age }} </h3>
+                    </div>
+                    <div class="panel-footer back-footer-green">
+                        Social age
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="panel panel-back noti-box">
                 <span class="icon-box bg-color-blue set-icon">
                     <i class="fa fa-comment"></i>
                 </span>
 
-                        <div class="text-box">
-                            <p>
+                    <div class="text-box">
+                        <p>
 
-                            <h3>Your actual age is : {{ age }}</h3></p>
-                            <p>Some comments generated based
-                                on the difference between social and actual age</p>
-                        </div>
+                        <h3>Some comments generated based
+                            on the difference between social and actual age</h3></p>
                     </div>
                 </div>
             </div>
-            <!-- /. ROW  -->
-            <hr/>
 
         </div>
-        <!-- /. PAGE INNER  -->
-    </div>
+        <!-- /. ROW  -->
+        <hr/>
 
-<script>
-    $('[data-toggle="tooltip"]').tooltip({'placement': 'right'});
-    $('[data-toggle="popover"]').popover({'placement': 'right'});
-</script>
-<script>
-    var g = new JustGage({
-        id: "gauge1",
-        value: {{ social_age }},
-        min: 0,
-        max: 100,
-        levelColors: ["#ff0000"],
-        title: "Social Age"
-    });
-</script>
+    </div>
+    <table>
+        {% for f in followed %}
+            <tr>
+                <td>{{ f.page.total }}</td>
+                <td>{{ f.page.tw_handle }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <!-- /. PAGE INNER  -->
+</div>
+

@@ -20,7 +20,7 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class PageAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tw_handle', 'fb_handle', 'total')
+    list_display = ('name', 'tw_handle', 'fb_handle', 'total' , 'avg_age')
 
 
 class PageLikeAdmin(admin.ModelAdmin):

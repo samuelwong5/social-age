@@ -38,6 +38,7 @@ class Page(models.Model):
     age55to64 = models.FloatField(default=0)
     ageAbove65 = models.FloatField(default=0)
     total = models.FloatField(default=0)
+    avg_age = models.FloatField(default=0)
 
     def __str__(self):
         if self.tw_handle != '':
