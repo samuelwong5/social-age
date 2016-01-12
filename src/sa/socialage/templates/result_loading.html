@@ -42,13 +42,14 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
 
 
                 <li>
-                    <a class="active-menu" href="#"><i class="fa fa-dashboard fa-3x"></i> Result</a>
+                    <a class="active-menu" id="results" href="#"><i class="fa fa-dashboard fa-3x"></i> Result</a>
                 </li>
                 <li>
+
                     <a href="../recommended"><i class="fa fa-file-o fa-3x"></i> Recommended Pages</a>
                 </li>
                 <li>
-                    <a href="#"><i class="fa fa-bar-chart-o fa-3x"></i>Charts</a>
+                    <a href="#" id="graphs"><i class="fa fa-bar-chart-o fa-3x"></i>Charts</a>
                 </li>
                 <li>
                     <a href="#"><i class="fa fa-table fa-3x"></i>Analysis</a>
@@ -67,14 +68,14 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
     <!-- /. NAV SIDE  -->
     <div id="content">
         <div id="page-wrapper" style="background-color: white;">
-                <div class="container" style="position: absolute;top: 40%;left: 75%;
+            <div class="container" style="position: absolute;top: 40%;left: 75%;
                 transform: translateX(-50%) translateY(-50%);">
-                    <img src="/static/socialage/img/loading_spinner.gif">
-                </div>
-                <div class="container2" style="position: absolute;top: 55%;left: 50%;
+                <img src="/static/socialage/img/loading_spinner.gif">
+            </div>
+            <div class="container2" style="position: absolute;top: 55%;left: 50%;
                 transform: translateX(-50%) translateY(-55%);">
-                    <h3>Calculating your results...</h3>
-                </div>
+                <h3>Calculating your results...</h3>
+            </div>
         </div>
     </div>
 
@@ -94,6 +95,62 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
 {% if api == 'fb' %}
     <script src="/static/socialage/js/results_content_ajax_fb.js"></script>
 {% endif %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+    function drawStuff(json) {
+        var data = new google.visualization.arrayToDataTable(json.page_age);
+        var options = {
+            title: 'Average age of liked pages',
+            width: 900,
+            legend: {position: 'none'},
+            chart: {
+                title: 'Liked Pages and Followed Users',
+                subtitle: 'average age'
+            },
+            bars: 'horizontal', // Required for Material Bar Charts.
+            axes: {
+                x: {
+                    0: {side: 'top', label: 'Age'} // Top x-axis.
+                }
+            },
+            bar: {groupWidth: "90%"}
+        };
+        try {
+            var chart = new google.visualization.BarChart(document.getElementById('age-chart'));
+        }
+        catch (err) {
+            alert(err);
+        }
+        chart.draw(data, options);
+    }
+    ;
+
+    $(document).ready(function () {
+        google.charts.load('current', {packages: ['corechart']});
+        $("#results").click(function () {
+            $.ajax({
+                url: "../results/",
+                success: function (result) {
+                    $("#content").html(result);
+                }
+            });
+        });
+        $("#graphs").click(function () {
+            $.ajax({
+                url: "../graphs/",
+                success: function (result) {
+                    $("#content").html(result);
+                    $.ajax({
+                        url: "../graph_data/",
+                        success: function (result) {
+                            drawStuff(result);
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
 <!-- BOOTSTRAP SCRIPTS -->
 <script src="/static/socialage/js/bootstrap.min.js"></script>
 <!-- METISMENU SCRIPTS -->

@@ -88,15 +88,18 @@ def fb_results(request):
         for p in curr_page['data']:
             try:
                 page = models.Page.objects.get(fb_id=p['id'])
+                page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
+                page_like = models.FacebookPageLike.objects.create(user=user, page=page, time=page_like_time)
             except:
-                page = None
-            if page is None:
-                page = models.Page.objects.create(name=p['name'],
-                                                  fb_id=p['id'],
-                                                  fb_handle=p['name'])
-            page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
-            page_like = models.FacebookPageLike.objects.create(user=user, page=page,
-                                                               time=page_like_time)
+                try:
+                    page = models.Page.objects.create(name=p['name'],
+                                                      fb_id=p['id'],
+                                                      fb_handle=p['id'])
+                    page_like_time = datetime.strptime(p['created_time'], '%Y-%m-%dT%H:%M:%S%z')
+                    page_like = models.FacebookPageLike.objects.create(user=user, page=page,
+                                                                       time=page_like_time)
+                except:
+                    pass
         curr_page = http_get(next_page)
 
     # Retrieve friends
@@ -277,14 +280,39 @@ def twitter_results(request):
             try:
                 page = models.Page.objects.get(tw_id=f['id'])
             except:
-                print('===============================')
-                print(f['id'])
                 page = models.Page.objects.create(name=f['name'],
                                                   tw_id=f['id'],
                                                   tw_handle=f['screen_name'])
             follow = models.TwitterFollow.objects.create(user=user, page=page)
 
     return redirect('results')
+
+
+def graphs(request):
+    template = loader.get_template('results_graphs.html')
+    context = RequestContext(request, {})
+    # return redirect('twitter_results')
+    return HttpResponse(template.render(context))
+
+
+def graph_data(request):
+    user_id = request.GET.get('id', 0)
+    if user_id == 0:
+        user_id = request.session['user_id']
+    user = models.User.objects.get(id=user_id)
+    if user is None:
+        return JsonResponse({})
+    data = []
+    for f in user.liked_pages.all():
+        if f.page.total > 5:
+            data.append([f.page.name, f.page.avg_age])
+    for f in user.followed_pages.all():
+        if f.page.total > 5:
+            data.append([f.page.name, f.page.avg_age])
+    data = [list(x) for x in set(tuple(x) for x in data)]
+    data = sorted(data, key=lambda x: x[1])
+    return JsonResponse({"page_age": [["Page", "Average Age"]] + data})
+
 
 
 '''
