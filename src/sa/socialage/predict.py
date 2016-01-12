@@ -98,7 +98,7 @@ def page_avg_age(page):
     return round(sum(map(lambda x, y: x * y, prob.tolist(), AGE_GROUP)))
 
 
-def recommend(user_age, exclude_twids=[], exclude_fbids=[], bound=2, page_needed=5):
+def recommend(user_age, exclude_twids=[], exclude_fbids=[], bound=2, page_needed=10):
     # Recommend 5 pages based on user's actual age or social age excluding the ones they have already liked.
     # Return the 5 random pages with decent popularity and same/similar page_avg_age as user_age.
     # Criteria: (page's average age - user_age) <= |bound| && both tw_id and fb_id exist.
