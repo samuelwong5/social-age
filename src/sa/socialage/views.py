@@ -59,8 +59,10 @@ def facebook(request):
             user = facebook_api_get('me', {'fields': 'id,name,birthday',
                                            'access_token': request.session.get('access_token')})
             request.session['user'] = user
+            profile_pic = "http://graph.facebook.com/" + user['id'] + "/picture?height=170&width=170"
         template = loader.get_template('result_loading.html')
-        context = RequestContext(request, {'api': 'fb'})
+        context = RequestContext(request, {'api': 'fb',
+                                           'profile_pic': profile_pic})
         # return redirect('fb_results')
         return HttpResponse(template.render(context))
 
@@ -123,15 +125,11 @@ def results(request):
     fb_page_ids = list(map(lambda x: x.page.fb_id, user.liked_pages.all()))
     tw_page_ids = list(map(lambda x: x.page.tw_id, user.followed_pages.all()))
     age = predict.predict(fb_page_ids, tw_page_ids)
-    if math.isnan(age):
-        age = -2
-    else:
-        age = round(age)
-
+    age = round(age)
     bio_age = int((date.today() - user.birthday.date()).days / 365.2425)
-    if user.age < 0: # First time, dont decrement age table
+    if user.age < 0:  # First time, dont decrement age table
         user.age = bio_age
-    else: # Decrement previous age table entry
+    else:  # Decrement previous age table entry
         age_table.age_table_sub(bio_age, user.social_age)
         user.social_age = age
     age_table.age_table_add(bio_age, age)
@@ -143,19 +141,20 @@ def results(request):
             friend = models.User.objects.get(fb_id=id)
             friends.append(friend)
         except:
-           pass
-
+            pass
+    msg = gen_message(bio_age - age)
     template = loader.get_template('result_content.html')
     context = RequestContext(request, {'username': user.name,
-                                   'birthday': user.birthday.strftime('%d %B, %Y'),
-                                   'age': bio_age,
-                                   'pages_liked': user.liked_pages.all(),
-                                   'followed': user.followed_pages.all(),
-                                   'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
-                                   'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0,
-                                   'social_age': age,
-                                   'user_id': user_id,
-                                   'friends': friends})
+                                       'birthday': user.birthday.strftime('%d %B, %Y'),
+                                       'age': bio_age,
+                                       'pages_liked': user.liked_pages.all(),
+                                       'followed': user.followed_pages.all(),
+                                       'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
+                                       'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0,
+                                       'social_age': age,
+                                       'user_id': user_id,
+                                       'friends': friends,
+                                       'message': msg})
     return HttpResponse(template.render(context))
 
 
@@ -216,8 +215,8 @@ def analysis(request):
     tw_page_frac = list(map(g, tested_tw_page))
     sfb = sum(fb_page_frac)
     stw = sum(tw_page_frac)
-    fb_page_frac = list(map(lambda x: x/sfb, fb_page_frac))
-    tw_page_frac = list(map(lambda x: x/stw, tw_page_frac))
+    fb_page_frac = list(map(lambda x: x / sfb, fb_page_frac))
+    tw_page_frac = list(map(lambda x: x / stw, tw_page_frac))
     h = lambda x: format(x * 100, '.2f')
     fb_page_percent = map(h, fb_page_frac)
     tw_page_percent = map(h, tw_page_frac)
@@ -271,8 +270,10 @@ def twitter(request):
         request.session['access_token_secret'] = token['oauth_token_secret']
         request.session['tw_id'] = token['user_id']
         request.session['tw_screen_name'] = token['screen_name']
+        profile_pic = "https://twitter.com/" + token['screen_name'] + "/profile_image?size=original"
         template = loader.get_template('result_loading.html')
-        context = RequestContext(request, {'api': 'tw'})
+        context = RequestContext(request, {'api': 'tw',
+                                           'profile_pic': profile_pic})
         # return redirect('twitter_results')
         return HttpResponse(template.render(context))
 
@@ -367,6 +368,7 @@ def graph_data(request):
     return JsonResponse({"page_age": [["Page", "Average Age"]] + liked_page_data,
                          "bio_dist": [["Social Age", "Frequency"]] + bio_dist_data, "bio_age": user.age,
                          "soc_dist": [["Biological Age", "Frequency"]] + soc_dist_data, "soc_age": user.social_age})
+
 
 '''
 Facebook API to get liked pages.
@@ -474,3 +476,19 @@ def get_facebook_pic(page):
 
 def get_twitter_pic(page):
     return "https://twitter.com/" + page.tw_handle + "/profile_image?size=normal"
+
+
+def gen_message(age_diff):
+    if age_diff < -15:
+        msg = "This is a msg for <-15"
+    elif age_diff >= -15 & age_diff <= -6:
+        msg = "This is a msg for -6~-15"
+    elif age_diff >= -5 & age_diff <= 5:
+        msg = "This is a msg for -5~+5"
+    elif age_diff >= 6 & age_diff <= 15:
+        msg = "This is a msg for +6~+15"
+    elif age_diff > 15:
+        msg = "This is a msg for >+15"
+    return msg
+
+

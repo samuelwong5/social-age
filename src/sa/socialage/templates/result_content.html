@@ -47,8 +47,7 @@
                     <div class="text-box">
                         <p>
 
-                        <h3>Some comments generated based
-                            on the difference between social and actual age</h3></p>
+                        <h3>{{ message }}</h3></p>
                     </div>
                 </div>
             </div>
@@ -58,14 +57,6 @@
         <hr/>
 
     </div>
-    <table>
-        {% for f in followed %}
-            <tr>
-                <td>{{ f.page.total }}</td>
-                <td>{{ f.page.tw_handle }}</td>
-            </tr>
-        {% endfor %}
-    </table>
     <!-- /. PAGE INNER  -->
 </div>
 

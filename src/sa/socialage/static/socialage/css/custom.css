@@ -201,8 +201,8 @@ color: #8d8888;
 -webkit-border-radius: 10px;
 -moz-border-radius: 10px;
 border-radius: 10px;
-max-height:170px;
-max-width:170px;
+height:170px;
+width:170px;
 }
 
 .navbar-cls-top .navbar-brand {

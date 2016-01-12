@@ -47,6 +47,7 @@ class Page(models.Model):
         else:
             return self.fb_handle
 
+
 class AgeTable(models.Model):
     id = models.IntegerField(primary_key=True)
     table = models.CommaSeparatedIntegerField(max_length=6400, default=','.join(['0'] * 6400))
@@ -64,3 +65,4 @@ class FacebookPageLike(models.Model):
 class TwitterFollow(models.Model):
     user = models.ForeignKey(User, related_name='followed_pages')
     page = models.ForeignKey(Page, related_name='followers')
+

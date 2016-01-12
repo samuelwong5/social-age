@@ -14,8 +14,12 @@ class LikeInline(admin.TabularInline):
     model = FacebookPageLike
 
 
+class FollowInLine(admin.TabularInline):
+    model = TwitterFollow
+
+
 class UserAdmin(admin.ModelAdmin):
-    inlines = [LikeInline]
+    inlines = [LikeInline, FollowInLine]
     list_display = ('name', 'id', 'birthday')
 
 
@@ -23,13 +27,9 @@ class PageAdmin(admin.ModelAdmin):
     list_display = ('name', 'tw_handle', 'fb_handle', 'total' , 'avg_age')
 
 
-class PageLikeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'page', 'time')
-
-
-class TwitterFollowAdmin(admin.ModelAdmin):
-    list_display = ('user', 'page')
-
+class AgeTableAdmin(admin.ModelAdmin):
+    list_display = ('id','table')
 
 admin.site.register(Page, PageAdmin)
 admin.site.register(User, UserAdmin)
+admin.site.register(AgeTable, AgeTableAdmin)
