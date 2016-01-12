@@ -88,7 +88,12 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
 <!-- JQUERY SCRIPTS -->
 <script src="/static/socialage/js/jquery-2.1.4.min.js"></script>
 <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script> -->
-<script src="/static/socialage/js/results_content_ajax.js"></script>
+{% if api == 'tw' %}
+    <script src="/static/socialage/js/results_content_ajax_tw.js"></script>
+{% endif %}
+{% if api == 'fb' %}
+    <script src="/static/socialage/js/results_content_ajax_fb.js"></script>
+{% endif %}
 <!-- BOOTSTRAP SCRIPTS -->
 <script src="/static/socialage/js/bootstrap.min.js"></script>
 <!-- METISMENU SCRIPTS -->
