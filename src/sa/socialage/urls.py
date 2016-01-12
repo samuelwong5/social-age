@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^twitter/', views.twitter, name='twitter'),
     url(r'^tw_results/', views.twitter_results, name='twitter_results'),
     url(r'^fb_api/', views.fb_api, name='fb_api'),
+    url(r'^recommended/', views.recommended, name='recommended'),
 ]

@@ -57,9 +57,9 @@ def facebook(request):
             user = facebook_api_get('me', {'fields': 'id,name,birthday',
                                            'access_token': request.session.get('access_token')})
             request.session['user'] = user
-        template = loader.get_template('result_test.html')
-        context = RequestContext(request, {'api':'fb'})
-        #return redirect('fb_results')
+        template = loader.get_template('result_loading.html')
+        context = RequestContext(request, {'api': 'fb'})
+        # return redirect('fb_results')
         return HttpResponse(template.render(context))
 
 
@@ -70,8 +70,8 @@ def fb_results(request):
         user_id = request.session.get('user_id', None)
         if user_id:
             user = models.User.objects.get(id=user_id)
-            user.name=fb_user['name']
-            user.fb_id=fb_user['id']
+            user.name = fb_user['name']
+            user.fb_id = fb_user['id']
         else:
             user = models.User.objects.get(fb_id=user['id'])
         user.birthday = user_bday
@@ -146,7 +146,7 @@ def results(request):
     template = loader.get_template('result_content.html')
     context = RequestContext(request, {'username': user.name,
                                        'birthday': user.birthday.strftime('%d %B, %Y'),
-                                       'age': int((date.today() - user.birthday.date()).days / 365.2425),
+                                       'age': age_from_birthday(user.birthday),
                                        'pages_liked': user.liked_pages.all(),
                                        'followed': user.followed_pages.all(),
                                        'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
@@ -154,6 +154,41 @@ def results(request):
                                        'social_age': age,
                                        'user_id': user_id,
                                        'friends': friends})
+
+    return HttpResponse(template.render(context))
+
+
+def recommended(request):
+    user_id = request.GET.get('id', 0)
+    if user_id == 0:
+        user_id = request.session['user_id']
+    user = models.User.objects.get(id=user_id)
+    if user is None:
+        return redirect('index')
+    fb_page_ids = fb_pages_from_user(user)
+    tw_page_ids = tw_pages_from_user(user)
+    rpages_a = predict.recommend(age_from_birthday(user.birthday), exclude_fbids=fb_page_ids,
+                                 exclude_twids=tw_page_ids, page_needed=10)
+    rpages_s = predict.recommend(user.social_age, exclude_fbids=fb_page_ids,
+                                 exclude_twids=tw_page_ids, page_needed=10)
+    n = lambda x: x.name
+    f = lambda x: "https://www.facebook.com/" + x.fb_handle
+    t = lambda x: "https://www.twitter.com/" + x.tw_handle
+    fb_pic = lambda x: "http://graph.facebook.com/" + x.fb_id + "/picture?type=square"
+    name_a = map(n, rpages_a)
+    name_s = map(n, rpages_s)
+    facebook_links_a = map(f, rpages_a)
+    twitter_links_a = map(t, rpages_a)
+    facebook_links_s = map(f, rpages_s)
+    twitter_links_s = map(t, rpages_s)
+    fb_pic_a = map(fb_pic, rpages_a)
+    fb_pic_s = map(fb_pic, rpages_s)
+    template = loader.get_template('recommended.html')
+    context = RequestContext(request,
+                             {'recommended_actual_age': zip(name_a, facebook_links_a, twitter_links_a, fb_pic_a),
+                              'recommended_social_age': zip(name_s, facebook_links_s, twitter_links_s, fb_pic_s),
+                              }
+                             )
 
     return HttpResponse(template.render(context))
 
@@ -192,8 +227,8 @@ def twitter(request):
         request.session['access_token_secret'] = token['oauth_token_secret']
         request.session['tw_id'] = token['user_id']
         request.session['tw_screen_name'] = token['screen_name']
-        template = loader.get_template('result_test.html')
-        context = RequestContext(request, {'api':'tw'})
+        template = loader.get_template('result_loading.html')
+        context = RequestContext(request, {'api': 'tw'})
         # return redirect('twitter_results')
         return HttpResponse(template.render(context))
 
@@ -318,3 +353,18 @@ def fb_api(request):
 
     age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())), 'fb')
     return JsonResponse({"status": "success", "user": fb_user, "liked_pages": pages, "social_age": round(age)})
+
+
+# =====================================================================================================
+# Util functions
+
+def age_from_birthday(birthday):
+    return int((date.today() - birthday.date()).days / 365.2425)
+
+
+def fb_pages_from_user(user):
+    return list(map(lambda x: x.page.fb_id, user.liked_pages.all()))
+
+
+def tw_pages_from_user(user):
+    return list(map(lambda x: x.page.fb_id, user.followed_pages.all()))

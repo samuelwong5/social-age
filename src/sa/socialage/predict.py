@@ -3,6 +3,8 @@ from .models import Page
 from django.db.models import Sum
 # Precomputed prior distribution (P(agegroup))
 PRIOR = np.array([0.008, 0.02, 0.029, 0.023, 0.14, 0.23, 0.22, 0.23, 0.06, 0.04])
+# Middle value of each age group
+AGE_GROUP = [10, 12.5, 14.5, 16.5, 21, 30, 40, 50, 60, 70]
 # For debugging tw:obama, ellenshow fb:michael jackson, league of legends
 TEST_IDS_TW = ["813286", "15846407"]
 TEST_IDS_FB = ["19691681472", "21785951839"]
@@ -27,11 +29,6 @@ def predict(test_ids_fb, test_ids_tw, debug=False):
         test_ids_tw = TEST_IDS_TW
         test_ids_fb = TEST_IDS_FB
 
-    print("test_ids_fb:")
-    print(test_ids_fb)
-    print("test_ids_tw:")
-    print(test_ids_tw)
-
     # Retrieve all pages
     pages = Page.objects.order_by('-total')
     test_stars_fb = pages.filter(fb_id__in=test_ids_fb, total__gte=20)
@@ -46,8 +43,6 @@ def predict(test_ids_fb, test_ids_tw, debug=False):
         return -1
 
     prob = extract_prob(test_stars)
-    print('Result of extract prob:')
-    print(prob)
     # Log the probabilities
     log_prob = np.log(prob)
     # Sum the log prob of all stars
@@ -61,10 +56,7 @@ def predict(test_ids_fb, test_ids_tw, debug=False):
     # Normalize
     total = np.sum(age_prob)
     age_prob = age_prob / total
-    print('Result of age prob:')
-    print(age_prob)
-    age_groups = [10, 12.5, 14.5, 16.5, 21, 30, 40, 50, 60, 70]
-    return sum(map(lambda x, y: x * y, age_prob.tolist(), age_groups))
+    return sum(map(lambda x, y: x * y, age_prob.tolist(), AGE_GROUP))
 
 
 def extract_prob(test_stars):
@@ -103,10 +95,15 @@ def page_avg_age(page):
     # Calculate the page average age based on single star posterior.
     prob = extract_prob([page])[0]
     prob /= sum(prob)
-    age_groups = [10, 12.5, 14.5, 16.5, 21, 30, 40, 50, 60, 70]
-    return round(sum(map(lambda x, y: x * y, prob.tolist(), age_groups)))
+    return round(sum(map(lambda x, y: x * y, prob.tolist(), AGE_GROUP)))
 
 
-# def recommend(user_age):
-    # Recommend 5 pages based on user's actual age or social age
-    # Return the 5 pages with most samples and same/similar page_avg_age as user_age.
+def recommend(user_age, exclude_twids=[], exclude_fbids=[], bound=2, page_needed=5):
+    # Recommend 5 pages based on user's actual age or social age excluding the ones they have already liked.
+    # Return the 5 random pages with decent popularity and same/similar page_avg_age as user_age.
+    # Criteria: (page's average age - user_age) <= |bound| && both tw_id and fb_id exist.
+    # Possible improvement: random based on the distribution on total instead of uniform distribution.
+    pages = Page.objects.order_by('-total').filter(avg_age__lte=(user_age+bound)).filter(avg_age__gte=(user_age-bound))
+    pages = pages.exclude(tw_id="").exclude(fb_id="").filter(total__gte=200)
+    pages = pages.exclude(tw_id__in=exclude_twids).exclude(fb_id__in=exclude_fbids)
+    return pages.order_by('?')[:page_needed]
