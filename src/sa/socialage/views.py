@@ -19,6 +19,7 @@ from django.shortcuts import redirect
 from django.template import RequestContext, loader
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Sum
 
 from . import age_table
 from . import models
@@ -58,7 +59,7 @@ def facebook(request):
             user = facebook_api_get('me', {'fields': 'id,name,birthday',
                                            'access_token': request.session.get('access_token')})
             request.session['user'] = user
-        template = loader.get_template('result_test.html')
+        template = loader.get_template('result_loading.html')
         context = RequestContext(request, {'api': 'fb'})
         # return redirect('fb_results')
         return HttpResponse(template.render(context))
@@ -158,6 +159,84 @@ def results(request):
     return HttpResponse(template.render(context))
 
 
+def recommended(request):
+    user_id = request.GET.get('id', 0)
+    if user_id == 0:
+        user_id = request.session['user_id']
+    user = models.User.objects.get(id=user_id)
+    if user is None:
+        return redirect('index')
+    # Generate a list of 10 of recommended pages for the users, excluding liked or followed ones,
+    # Also generate the links to the pages and profile picture of the pages.
+    fb_page_ids = fb_pages_from_user(user)
+    tw_page_ids = tw_pages_from_user(user)
+    rpages_a = predict.recommend(age_from_birthday(user.birthday), exclude_fbids=fb_page_ids,
+                                 exclude_twids=tw_page_ids, page_needed=10)
+    rpages_s = predict.recommend(user.social_age, exclude_fbids=fb_page_ids,
+                                 exclude_twids=tw_page_ids, page_needed=10)
+    name_a = map(get_name, rpages_a)
+    name_s = map(get_name, rpages_s)
+    facebook_links_a = map(get_facebook_link, rpages_a)
+    twitter_links_a = map(get_facebook_link, rpages_a)
+    facebook_links_s = map(get_twitter_link, rpages_s)
+    twitter_links_s = map(get_twitter_link, rpages_s)
+    fb_pic_a = map(get_facebook_pic, rpages_a)
+    fb_pic_s = map(get_facebook_pic, rpages_s)
+    template = loader.get_template('recommended.html')
+    context = RequestContext(request,
+                             {'recommended_actual_age': zip(name_a, facebook_links_a, twitter_links_a, fb_pic_a),
+                              'recommended_social_age': zip(name_s, facebook_links_s, twitter_links_s, fb_pic_s),
+                              }
+                             )
+
+    return HttpResponse(template.render(context))
+
+
+def analysis(request):
+    user_id = request.GET.get('id', 0)
+    if user_id == 0:
+        user_id = request.session['user_id']
+    user = models.User.objects.get(id=user_id)
+    if user is None:
+        return redirect('index')
+    # get all the tested pages of the users, compute the average age of these pages
+    # and the approximate weighting of them based on total sample from a page
+    tested_fb_page = user.liked_pages.all().filter(page__total__gte=20)
+    tested_fb_page = list(map(lambda x: x.page, tested_fb_page))
+    tested_tw_page = user.followed_pages.all().filter(page__total__gte=20)
+    tested_tw_page = list(map(lambda x: x.page, tested_tw_page))
+
+    # get the computed average ages
+    f = lambda x: int(x.avg_age)
+    fb_avg_age = map(f, tested_fb_page)
+    tw_avg_age = map(f, tested_tw_page)
+    # get the approximate weighting
+    g = lambda x: x.total
+    fb_page_frac = list(map(g, tested_fb_page))
+    tw_page_frac = list(map(g, tested_tw_page))
+    sfb = sum(fb_page_frac)
+    stw = sum(tw_page_frac)
+    fb_page_frac = list(map(lambda x: x/sfb, fb_page_frac))
+    tw_page_frac = list(map(lambda x: x/stw, tw_page_frac))
+    h = lambda x: format(x * 100, '.2f')
+    fb_page_percent = map(h, fb_page_frac)
+    tw_page_percent = map(h, tw_page_frac)
+    # get the profile pic
+    fb_page_pic = map(get_facebook_pic, tested_fb_page)
+    tw_page_pic = map(get_twitter_pic, tested_tw_page)
+    # get the name
+    fb_page_handle = map(lambda x: x.fb_handle, tested_fb_page)
+    tw_page_handle = map(lambda x: x.tw_handle, tested_tw_page)
+
+    template = loader.get_template('analysis.html')
+    context = RequestContext(request, {'fb_data': zip(fb_page_pic, fb_page_handle, fb_avg_age, fb_page_percent),
+                                       'tw_data': zip(tw_page_pic, tw_page_handle, tw_avg_age, tw_page_percent),
+                                       }
+                             )
+
+    return HttpResponse(template.render(context))
+
+
 def twitter(request):
     if not request.GET:
         # Getting a request token
@@ -192,7 +271,7 @@ def twitter(request):
         request.session['access_token_secret'] = token['oauth_token_secret']
         request.session['tw_id'] = token['user_id']
         request.session['tw_screen_name'] = token['screen_name']
-        template = loader.get_template('result_test.html')
+        template = loader.get_template('result_loading.html')
         context = RequestContext(request, {'api': 'tw'})
         # return redirect('twitter_results')
         return HttpResponse(template.render(context))
@@ -289,7 +368,6 @@ def graph_data(request):
                          "bio_dist": [["Social Age", "Frequency"]] + bio_dist_data, "bio_age": user.age,
                          "soc_dist": [["Biological Age", "Frequency"]] + soc_dist_data, "soc_age": user.social_age})
 
-
 '''
 Facebook API to get liked pages.
 
@@ -356,3 +434,43 @@ def fb_api(request):
 
     age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())), 'fb')
     return JsonResponse({"status": "success", "user": fb_user, "liked_pages": pages, "social_age": round(age)})
+
+
+# =====================================================================================================
+# Util functions
+
+def age_from_birthday(birthday):
+    return int((date.today() - birthday.date()).days / 365.2425)
+
+
+def fb_pages_from_user(user):
+    return list(map(lambda x: x.page.fb_id, user.liked_pages.all()))
+
+
+def tw_pages_from_user(user):
+    return list(map(lambda x: x.page.fb_id, user.followed_pages.all()))
+
+    n = lambda x: x.name
+    f = lambda x: "https://www.facebook.com/" + x.fb_handle
+    t = lambda x: "https://www.twitter.com/" + x.tw_handle
+    fb_pic = lambda x: "http://graph.facebook.com/" + x.fb_id + "/picture?type=square"
+
+
+def get_name(page):
+    return page.name
+
+
+def get_facebook_link(page):
+    return "https://www.facebook.com/" + page.fb_handle
+
+
+def get_twitter_link(page):
+    return "https://www.twitter.com/" + page.tw_handle
+
+
+def get_facebook_pic(page):
+    return "http://graph.facebook.com/" + page.fb_id + "/picture?type=square"
+
+
+def get_twitter_pic(page):
+    return "https://twitter.com/" + page.tw_handle + "/profile_image?size=normal"
