@@ -27,5 +27,9 @@ class PageLikeAdmin(admin.ModelAdmin):
     list_display = ('user', 'page', 'time')
 
 
+class TwitterFollowAdmin(admin.ModelAdmin):
+    list_display = ('user', 'page')
+
+
 admin.site.register(Page, PageAdmin)
 admin.site.register(User, UserAdmin)

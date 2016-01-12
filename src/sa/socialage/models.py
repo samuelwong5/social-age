@@ -22,10 +22,10 @@ class User(models.Model):
 
 class Page(models.Model):
     id = models.CharField(primary_key=True, max_length=100, unique=True, blank=True, default=char_uuid4)
-    name = models.CharField(max_length=100, default='NAME_NOT_FOUND')
-    fb_id = models.CharField(max_length=30, default='FACEBOOK_PAGE_NOT_FOUND')
-    tw_id = models.CharField(max_length=30)
-    fb_handle = models.CharField(max_length=100, default='FACEBOOK_PAGE_NOT_FOUND')
+    name = models.CharField(max_length=100)
+    fb_id = models.CharField(max_length=30)
+    tw_id = models.CharField(max_length=30, unique=True)
+    fb_handle = models.CharField(max_length=100)
     tw_handle = models.CharField(max_length=100)
     ageUnder12 = models.FloatField(default=0)
     age12to13 = models.FloatField(default=0)
@@ -45,14 +45,6 @@ class Page(models.Model):
         else:
             return self.fb_handle
 
-    def avg_age(self):
-        if self.total == 0:
-            return -1
-        age_prob = [self.ageUnder12, self.age12to13, self.age14to15, self.age16to17, self.age18to24,
-                    self.age25to34, self.age35to44, self.age45to54, self.age55to64]
-        age_prob = map(lambda x: x / (self.total - self.ageAbove65), age_prob)
-        age_groups = [10, 12.5, 14.5, 16.5, 21, 30, 40, 50, 60]
-        return round(sum(map(lambda x,y:x*y,age_prob, age_groups)),1)
 
 
 class FacebookPageLike(models.Model):

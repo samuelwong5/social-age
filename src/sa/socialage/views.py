@@ -65,24 +65,21 @@ def facebook(request):
 
 def fb_results(request):
     fb_user = request.session['user']
+    user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'), timezone.UTC())
     try:
         user_id = request.session.get('user_id', None)
         if user_id:
             user = models.User.objects.get(id=user_id)
+            user.name=fb_user['name']
+            user.fb_id=fb_user['id']
         else:
             user = models.User.objects.get(fb_id=user['id'])
+        user.birthday = user_bday
+        user.save()
         # Clear previous FacebookPageLike objects associated with the User
         user.liked_pages.all().delete()
     except:
-        user = None
-    user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'),
-                                    timezone.UTC())
-    if user is None:
-        user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'],
-                                          birthday=user_bday)
-    else:
-        user.birthday = user_bday
-        user.save()
+        user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'], birthday=user_bday)
     request.session['user_id'] = user.id
     # Retrieve pages liked
     curr_page = facebook_api_get(fb_user['id'] + '/likes/', {'access_token': request.session.get('access_token')})
@@ -118,7 +115,9 @@ def results(request):
     user = models.User.objects.get(id=user_id)
     if user is None:
         return redirect('index')
-    age = predict.predict(list(map(lambda x: x.page.fb_id, user.liked_pages.all())), 'fb')
+    fb_page_ids = list(map(lambda x: x.page.fb_id, user.liked_pages.all()))
+    tw_page_ids = list(map(lambda x: x.page.tw_id, user.followed_pages.all()))
+    age = predict.predict(fb_page_ids, tw_page_ids)
     if math.isnan(age):
         age = -2
     else:
@@ -195,6 +194,9 @@ def twitter_results(request):
         user_id = request.session.get('user_id', None)
         if user_id:
             user = models.User.objects.get(id=user_id)
+            user.tw_id = request.session['tw_id']
+            user.tw_handle = request.session['tw_screen_name']
+            user.save()
         else:
             user = models.User.objects.get(tw_id=request.session['tw_id'])
         # Clear previous FacebookPageLike objects associated with the User
@@ -231,6 +233,8 @@ def twitter_results(request):
             try:
                 page = models.Page.objects.get(tw_id=f['id'])
             except:
+                print('===============================')
+                print(f['id'])
                 page = models.Page.objects.create(name=f['name'],
                                                   tw_id=f['id'],
                                                   tw_handle=f['screen_name'])
