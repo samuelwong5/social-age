@@ -14,6 +14,7 @@ class User(models.Model):
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(default=datetime.now)
     social_age = models.IntegerField(default=0)
+    age = models.IntegerField(default=-1)
     fb_friends = models.CommaSeparatedIntegerField(max_length=100)
 
     def __str__(self):
@@ -46,6 +47,9 @@ class Page(models.Model):
         else:
             return self.fb_handle
 
+class AgeTable(models.Model):
+    id = models.IntegerField(primary_key=True)
+    table = models.CommaSeparatedIntegerField(max_length=6400, default=','.join(['0'] * 6400))
 
 
 class FacebookPageLike(models.Model):

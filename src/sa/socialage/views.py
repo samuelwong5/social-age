@@ -20,6 +20,7 @@ from django.template import RequestContext, loader
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+from . import age_table
 from . import models
 from . import predict
 from .api import *
@@ -125,18 +126,15 @@ def results(request):
         age = -2
     else:
         age = round(age)
-        user.social_age = age
-        user.save()
-    '''print(age)
 
-    for i in user.liked_pages.all():
-        a = i.page.avg_age()
-        if a > 0:
-            try:
-                print('{0}: {1}'.format(i.page.name, a))
-            except:
-                pass
-    '''
+    bio_age = int((date.today() - user.birthday.date()).days / 365.2425)
+    if user.age < 0: # First time, dont decrement age table
+        user.age = bio_age
+    else: # Decrement previous age table entry
+        age_table.age_table_sub(bio_age, user.social_age)
+        user.social_age = age
+    age_table.age_table_add(bio_age, age)
+    user.save()
     friend_ids = user.fb_friends
     friends = []
     for id in friend_ids.split(','):
@@ -144,20 +142,19 @@ def results(request):
             friend = models.User.objects.get(fb_id=id)
             friends.append(friend)
         except:
-            pass
+           pass
 
     template = loader.get_template('result_content.html')
     context = RequestContext(request, {'username': user.name,
-                                       'birthday': user.birthday.strftime('%d %B, %Y'),
-                                       'age': int((date.today() - user.birthday.date()).days / 365.2425),
-                                       'pages_liked': user.liked_pages.all(),
-                                       'followed': user.followed_pages.all(),
-                                       'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
-                                       'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0,
-                                       'social_age': age,
-                                       'user_id': user_id,
-                                       'friends': friends})
-
+                                   'birthday': user.birthday.strftime('%d %B, %Y'),
+                                   'age': bio_age,
+                                   'pages_liked': user.liked_pages.all(),
+                                   'followed': user.followed_pages.all(),
+                                   'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
+                                   'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0,
+                                   'social_age': age,
+                                   'user_id': user_id,
+                                   'friends': friends})
     return HttpResponse(template.render(context))
 
 
@@ -267,17 +264,30 @@ def graph_data(request):
     user = models.User.objects.get(id=user_id)
     if user is None:
         return JsonResponse({})
-    data = []
+
+    # Liked Page vs Age
+    liked_page_data = []
     for f in user.liked_pages.all():
         if f.page.total > 5:
-            data.append([f.page.name, f.page.avg_age])
+            liked_page_data.append([f.page.name, f.page.avg_age])
     for f in user.followed_pages.all():
         if f.page.total > 5:
-            data.append([f.page.name, f.page.avg_age])
-    data = [list(x) for x in set(tuple(x) for x in data)]
-    data = sorted(data, key=lambda x: x[1])
-    return JsonResponse({"page_age": [["Page", "Average Age"]] + data})
+            liked_page_data.append([f.page.name, f.page.avg_age])
+    print(liked_page_data)
+    liked_page_data = [list(x) for x in set(tuple(x) for x in liked_page_data)]
+    liked_page_data = sorted(liked_page_data, key=lambda x: x[1])
 
+    # Social age distribution for user biological age
+    bio_dist_data = age_table.age_table_bio_dist(user.age)
+    bio_dist_data = list(filter(lambda x: x[1] > 0, bio_dist_data))
+
+    # Biological age distribution for user social age
+    soc_dist_data = age_table.age_table_soc_dist(user.social_age)
+    soc_dist_data = list(filter(lambda x: x[1] > 0, soc_dist_data))
+
+    return JsonResponse({"page_age": [["Page", "Average Age"]] + liked_page_data,
+                         "bio_dist": [["Social Age", "Frequency"]] + bio_dist_data, "bio_age": user.age,
+                         "soc_dist": [["Biological Age", "Frequency"]] + soc_dist_data, "soc_age": user.social_age})
 
 
 '''
