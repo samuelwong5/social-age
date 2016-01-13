@@ -34,8 +34,7 @@ def predict(test_ids_fb, test_ids_tw, debug=False):
     test_stars_fb = pages.filter(fb_id__in=test_ids_fb, total__gte=20)
     test_stars_tw = pages.filter(tw_id__in=test_ids_tw, total__gte=20)
     test_stars = test_stars_fb | test_stars_tw
-    print("test_stars:")
-    print(test_stars)
+
     # if the amount of test_stars is less than MIN_TESTSTARS,
     # return -1 and tell user that the pages they provided are
     # insufficient to compute an accurate social age
@@ -98,7 +97,7 @@ def page_avg_age(page):
     return round(sum(map(lambda x, y: x * y, prob.tolist(), AGE_GROUP)))
 
 
-def recommend(user_age, exclude_twids=[], exclude_fbids=[], bound=2, page_needed=10):
+def recommend(user_age, exclude_twids=[], exclude_fbids=[], bound=3, page_needed=10):
     # Recommend 5 pages based on user's actual age or social age excluding the ones they have already liked.
     # Return the 5 random pages with decent popularity and same/similar page_avg_age as user_age.
     # Criteria: (page's average age - user_age) <= |bound| && both tw_id and fb_id exist.

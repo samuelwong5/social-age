@@ -21,18 +21,12 @@
 <div id="wrapper">
     <nav class="navbar navbar-default navbar-cls-top " role="navigation" style="margin-bottom: 0">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a class="navbar-brand">social age</a>
         </div>
         <div style="color: white;
 padding: 15px 50px 5px 50px;
 float: right;
-font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Return to homepage</a></div>
+font-size: 16px;"><a href="../" class="btn btn-primary square-btn-adjust">Return to homepage</a></div>
     </nav>
     <!-- /. NAV TOP  -->
     <nav class="navbar-default navbar-side" role="navigation">
@@ -44,21 +38,30 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Return 
 
 
                 <li>
-                    <a id="results" href="#"><i class="fa fa-dashboard fa-3x"></i>Result</a>
+                    <a id="results"><i class="fa fa-dashboard fa-3x"></i>Result</a>
                 </li>
                 <li>
-
-                    <a href="#" id="recommend"><i class="fa fa-file-o fa-3x"></i>Recommended Pages</a>
+                    <a id="recommend"><i class="fa fa-file-o fa-3x"></i>Recommended Pages</a>
                 </li>
                 <li>
-                    <a href="#" id="graphs"><i class="fa fa-bar-chart-o fa-3x"></i>Charts</a>
+                    <a id="graphs"><i class="fa fa-bar-chart-o fa-3x"></i>Charts</a>
                 </li>
                 <li>
-                    <a href="#" id="analysis"><i class="fa fa-table fa-3x"></i>Analysis</a>
+                    <a id="analysis"><i class="fa fa-table fa-3x"></i>Analysis</a>
                 </li>
                 <li>
-                    <a href="#" id="friends"><i class="fa fa-users fa-3x"></i>Friends </a>
+                    <a id="friends"><i class="fa fa-users fa-3x"></i>Friends </a>
                 </li>
+                {% if has_fb == 0 %}
+                    <li>
+                        <a href="../facebook"><i class="fa fa-facebook fa-3x"></i>Include your facebook profile</a>
+                    </li>
+                {% endif %}
+                {% if has_tw == 0 %}
+                    <li>
+                        <a href="../twitter"><i class="fa fa-twitter fa-3x"></i>Include your twitter profile</a>
+                    </li>
+                {% endif %}
             </ul>
 
         </div>
@@ -80,7 +83,11 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Return 
                             <div class="panel-body">
                                 <i class="fa fa-heartbeat fa-5x"></i>
 
-                                <h3>{{ age }}</h3>
+                                <h3>{% if age  == 0 %}
+                                    Login with facebook for us to get your actual age
+                                {% else %}
+                                    {{ age }}
+                                {% endif %} </h3>
                             </div>
                             <div class="panel-footer back-footer-red">
                                 Biological age
@@ -94,7 +101,11 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Return 
                             <div class="panel-body">
                                 <i class="fa fa-users fa-5x"></i>
 
-                                <h3>{{ social_age }} </h3>
+                                <h3>{% if social_age  == -1 %}
+                                    No social age computed
+                                {% else %}
+                                    {{ social_age }}
+                                {% endif %} </h3>
                             </div>
                             <div class="panel-footer back-footer-green">
                                 Social age
@@ -114,7 +125,7 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Return 
                             <div class="text-box">
                                 <p>
 
-                                <h3>{{ message }}</h3></p>
+                                <h1>{{ message }}</h1></p>
                             </div>
                         </div>
                     </div>

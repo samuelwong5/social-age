@@ -41,6 +41,7 @@ def index(request):
 # ============================================ APIs  ==================================================
 # =====================================================================================================
 
+
 def facebook(request):
     if not request.GET:  # New session - Facebook authentication
         request.session['index_uri'] = request.build_absolute_uri()
@@ -285,6 +286,11 @@ def fb_api(request):
 # ===================================== Result pages ==================================================
 # =====================================================================================================
 
+"""
+These are called with AJAX to replace content of result_page.html
+"""
+
+
 def results(request):
     user_id = request.GET.get('id', 0)
     if user_id == 0:
@@ -322,6 +328,8 @@ def results(request):
             dict['profile_pic'] = "https://twitter.com/" + user.tw_id + "/profile_image?size=original"
         else:
             dict['profile_pic'] = "http://graph.facebook.com/" + user.fb_id + "/picture?height=170&width=170"
+        dict['has_fb'] = 0 if user.fb_id == "-1" else 1
+        dict['has_tw'] = 0 if user.tw_id == "-1" else 1
     context = RequestContext(request, dict)
     return HttpResponse(template.render(context))
 
@@ -493,11 +501,6 @@ def fb_pages_from_user(user):
 def tw_pages_from_user(user):
     return list(map(lambda x: x.page.fb_id, user.followed_pages.all()))
 
-    n = lambda x: x.name
-    f = lambda x: "https://www.facebook.com/" + x.fb_handle
-    t = lambda x: "https://www.twitter.com/" + x.tw_handle
-    fb_pic = lambda x: "http://graph.facebook.com/" + x.fb_id + "/picture?type=square"
-
 
 def get_name(page):
     return page.name
@@ -522,9 +525,9 @@ def get_twitter_pic(page):
 def gen_message(bio_age, social_age):
     age_diff = bio_age - social_age
     if bio_age == 0:
-        msg = "Sign in with facebook as well to get your actual age!"
+        msg = "Sign in with facebook as well to get your actual age so we can give you a more in depth result!"
     elif social_age == -1:
-        msg = "Sorry the pages you have liked or followed are insufficient for us to predict your social age!"
+        msg = "Sorry the pages you have liked or followed are insufficient for us to predict your social age! Maybe try logging in with the other social network?"
     elif age_diff < -15:
         msg = "This is a msg for <-15"
     elif age_diff >= -15 & age_diff <= -6:
