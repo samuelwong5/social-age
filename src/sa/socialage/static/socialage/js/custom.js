@@ -91,11 +91,8 @@ $(document).ready(function () {
                                 title: 'Liked Pages and Followed Users',
                                 subtitle: 'average age'
                             },
-                            axes: {
-                                x: {
-                                    0: {side: 'top', label: 'Age'} // Top x-axis.
-                                }
-                            },
+                            hAxis: {title: 'Social Age'},
+                            vAxis: {title: 'Page'},
                             bar: {groupWidth: "90%"}
                         };
                         drawStuff("page-chart", options, result.page_age, true);
@@ -105,16 +102,10 @@ $(document).ready(function () {
                             legend: {position: 'none'},
                             chart: {
                                 title: 'Distribution of Social Age',
-                                subtitle: 'Biological Age = 24'
+                                subtitle: 'Biological Age = ' + result.bio_age
                             },
-                            axes: {
-                                x: {
-                                    0: {side: 'top', label: 'Social Age'} // Top x-axis.
-                                },
-                                y: {
-                                    0: {label: 'Frequency'} // Top x-axis.
-                                }
-                            },
+                            hAxis: {title: 'Social Age'},
+                            vAxis: {title: 'Frequency'},
                             bar: {groupWidth: "90%"}
                         };
                         drawStuff("bio-age", options, result.bio_dist, false);
@@ -125,16 +116,10 @@ $(document).ready(function () {
                             legend: {position: 'none'},
                             chart: {
                                 title: 'Distribution of Biological Age',
-                                subtitle: 'Social Age = ' + result.soc_age.toString()
+                                subtitle: 'Social Age = ' + result.soc_age
                             },
-                            axes: {
-                                x: {
-                                    0: {side: 'top', label: 'Biological Age'} // Top x-axis.
-                                },
-                                y: {
-                                    0: {label: 'Frequency'} // Top x-axis.
-                                }
-                            },
+                            hAxis: {title: 'Biological Age'},
+                            vAxis: {title: 'Frequency'},
                             bar: {groupWidth: "90%"}
                         };
                         drawStuff("soc-age", options, result.soc_dist, false);
