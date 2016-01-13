@@ -546,13 +546,13 @@ def gen_message(bio_age, social_age):
     elif social_age == -1:
         msg = "Sorry the pages you have liked or followed are insufficient for us to predict your social age! Maybe try logging in with the other social network?"
     elif age_diff < -15:
-        msg = "This is a msg for <-15"
+        msg = "Wow! Your interests are much more mature relative to your peers! Check out the breakdown in the analysis for details."
     elif age_diff >= -15 & age_diff <= -6:
-        msg = "This is a msg for -6~-15"
+        msg = "Your interests are relatively mature compared to your peers!"
     elif age_diff >= -5 & age_diff <= 5:
-        msg = "This is a msg for -5~+5"
+        msg = "Your social media interests bears a semblance to those of your age group! Check out the recommended pages to see what some of your peers have liked!"
     elif age_diff >= 6 & age_diff <= 15:
-        msg = "This is a msg for +6~+15"
+        msg = "Your interests portray you as a younger person! Checkout the graphs to see the pages you have liked!"
     elif age_diff > 15:
-        msg = "This is a msg for >+15"
+        msg = "Wow! Your interests suggest that you may be younger in spirit relative to your peers! Check out the friend's tab to compare your results with your friends!"
     return msg
