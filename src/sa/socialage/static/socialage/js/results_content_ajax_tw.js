@@ -2,7 +2,7 @@ $(document).ready(function () {
     $.ajax({
         url: "../tw_results/",
         success: function (result) {
-            $("#content").html(result);
+            window.location.href = "../resultpage";
             $("document").title = 'results';
         }
     });

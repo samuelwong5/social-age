@@ -285,7 +285,6 @@ def fb_api(request):
 # ===================================== Result pages ==================================================
 # =====================================================================================================
 
-
 def results(request):
     user_id = request.GET.get('id', 0)
     if user_id == 0:
@@ -306,13 +305,24 @@ def results(request):
     age_table.age_table_add(bio_age, age)
     user.save()
     msg = gen_message(bio_age, age)
-    template = loader.get_template('result_content.html')
-    context = RequestContext(request, {'username': user.name,
-                                       'birthday': user.birthday.strftime('%d %B, %Y'),
-                                       'age': bio_age,
-                                       'social_age': age,
-                                       'user_id': user_id,
-                                       'message': msg})
+    # if url contains resultpage, load template with nav bar and header as well, instead of
+    # just the content.
+    if "resultpage" in request.build_absolute_uri():
+        template = loader.get_template('result_page.html')
+    else:
+        template = loader.get_template('result_content.html')
+    dict = {'username': user.name,
+            'birthday': user.birthday.strftime('%d %B, %Y'),
+            'age': bio_age,
+            'social_age': age,
+            'user_id': user_id,
+            'message': msg}
+    if "resultpage" in request.build_absolute_uri():
+        if user.fb_id == -1:
+            dict['profile_pic'] = "https://twitter.com/" + user.tw_id + "/profile_image?size=original"
+        else:
+            dict['profile_pic'] = "http://graph.facebook.com/" + user.fb_id + "/picture?height=170&width=170"
+    context = RequestContext(request, dict)
     return HttpResponse(template.render(context))
 
 

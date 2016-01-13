@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^friends/', views.friends, name='friends'),
     url(r'^graphs/', views.graphs, name='graphs'),
     url(r'^graph_data/', views.graph_data, name='graph_data'),
+    url(r'^resultpage/', views.results, name='resultpage',)
 ]
