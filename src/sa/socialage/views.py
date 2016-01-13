@@ -287,7 +287,7 @@ def fb_api(request):
 # =====================================================================================================
 
 """
-These are called with AJAX to replace content of result_page.html
+Codes from this section are called with AJAX to replace content of result_page.html
 """
 
 
