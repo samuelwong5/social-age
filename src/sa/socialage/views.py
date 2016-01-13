@@ -114,7 +114,7 @@ def fb_results(request):
 def twitter(request):
     if not request.GET:
         # Getting a request token
-        hdr = {'oauth_callback': DEPLOY_URL + '/twitter',
+        hdr = {'oauth_callback': DEPLOY_URL + 'twitter',
                'oauth_consumer_key': CONSUMER_ID,  # consumer id
                'oauth_nonce': oauth_nonce(),  # nonce
                'oauth_signature_method': 'HMAC-SHA1',  # signature method
