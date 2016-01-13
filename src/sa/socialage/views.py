@@ -142,7 +142,7 @@ def results(request):
             friends.append(friend)
         except:
             pass
-    msg = gen_message(bio_age - age)
+    msg = gen_message(bio_age, age)
     template = loader.get_template('result_content.html')
     context = RequestContext(request, {'username': user.name,
                                        'birthday': user.birthday.strftime('%d %B, %Y'),
@@ -478,8 +478,13 @@ def get_twitter_pic(page):
     return "https://twitter.com/" + page.tw_handle + "/profile_image?size=normal"
 
 
-def gen_message(age_diff):
-    if age_diff < -15:
+def gen_message(bio_age, social_age):
+    age_diff = bio_age - social_age
+    if bio_age == 0:
+        msg = "Sign in with facebook as well to get your actual age!"
+    elif social_age == -1:
+        msg = "Sorry the pages you have liked or followed are insufficient for us to predict your social age!"
+    elif age_diff < -15:
         msg = "This is a msg for <-15"
     elif age_diff >= -15 & age_diff <= -6:
         msg = "This is a msg for -6~-15"
