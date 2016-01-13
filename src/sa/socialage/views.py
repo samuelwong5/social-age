@@ -134,26 +134,13 @@ def results(request):
         user.social_age = age
     age_table.age_table_add(bio_age, age)
     user.save()
-    friend_ids = user.fb_friends
-    friends = []
-    for id in friend_ids.split(','):
-        try:
-            friend = models.User.objects.get(fb_id=id)
-            friends.append(friend)
-        except:
-            pass
     msg = gen_message(bio_age, age)
     template = loader.get_template('result_content.html')
     context = RequestContext(request, {'username': user.name,
                                        'birthday': user.birthday.strftime('%d %B, %Y'),
                                        'age': bio_age,
-                                       'pages_liked': user.liked_pages.all(),
-                                       'followed': user.followed_pages.all(),
-                                       'has_fb': -1 if len(user.liked_pages.all()) == 0 else 0,
-                                       'has_tw': -1 if len(user.followed_pages.all()) == 0 else 0,
                                        'social_age': age,
                                        'user_id': user_id,
-                                       'friends': friends,
                                        'message': msg})
     return HttpResponse(template.render(context))
 
@@ -230,6 +217,40 @@ def analysis(request):
     template = loader.get_template('analysis.html')
     context = RequestContext(request, {'fb_data': zip(fb_page_pic, fb_page_handle, fb_avg_age, fb_page_percent),
                                        'tw_data': zip(tw_page_pic, tw_page_handle, tw_avg_age, tw_page_percent),
+                                       }
+                             )
+
+    return HttpResponse(template.render(context))
+
+
+def friends(request):
+    user_id = request.GET.get('id', 0)
+    if user_id == 0:
+        user_id = request.session['user_id']
+    user = models.User.objects.get(id=user_id)
+    if user is None:
+        return redirect('index')
+    # Get the users' facebook friends who have used our app, get their pic, name, age and social age to create
+    # a comparison chart on the webpage.
+    friend_ids = user.fb_friends
+    friends = []
+    friends.append(user)
+    for id in friend_ids.split(','):
+        try:
+            friend = models.User.objects.get(fb_id=id)
+            friends.append(friend)
+        except:
+            pass
+
+    friends_pic = map(lambda x: "http://graph.facebook.com/" + x.fb_id + "/picture?type=square", friends)
+    friends_name = map(lambda x: x.name, friends)
+    friends_age = map(lambda x: age_from_birthday(x.birthday), friends)
+    friends_sage = map(lambda x: x.social_age, friends)
+
+    template = loader.get_template('friends.html')
+    context = RequestContext(request, {'friends_data': zip(friends_pic, friends_name, friends_age, friends_sage),
+                                       'has_friend': 1 if len(friends) != 0 else 0,
+                                       'logged_in_fb': 1 if user.fb_id != -1 else 0,
                                        }
                              )
 

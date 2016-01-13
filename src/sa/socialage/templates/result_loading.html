@@ -54,13 +54,10 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
                     <a href="#" id="graphs"><i class="fa fa-bar-chart-o fa-3x"></i>Charts</a>
                 </li>
                 <li>
-                    <a href="#" id ="analysis"><i class="fa fa-table fa-3x"></i>Analysis</a>
+                    <a href="#" id="analysis"><i class="fa fa-table fa-3x"></i>Analysis</a>
                 </li>
                 <li>
-                    <a href="#"><i class="fa fa-users fa-3x"></i> Friends </a>
-                </li>
-                <li>
-                    <a href="#"><i class="fa fa-comments fa-3x"></i>Rate your experience</a>
+                    <a href="#" id="friends"><i class="fa fa-users fa-3x"></i>Friends </a>
                 </li>
             </ul>
 
@@ -140,6 +137,14 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
                 }
             });
         });
+        $("#friends").click(function () {
+            $.ajax({
+                url: "../friends/",
+                success: function (result) {
+                    $("#content").html(result);
+                }
+            });
+        });
         $("#graphs").click(function () {
             $.ajax({
                 url: "../graphs/",
@@ -165,7 +170,7 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
                             };
                             drawStuff("page-chart", options, result.page_age, true);
                             options = {
-                                title: 'Distribution of Social Age',
+                                title: 'Distribution of other users\' social age with same biological age as you',
                                 width: 900,
                                 legend: {position: 'none'},
                                 chart: {
@@ -185,7 +190,7 @@ font-size: 16px;"><a href="../" class="btn btn-danger square-btn-adjust">Logout<
                             drawStuff("bio-age", options, result.bio_dist, false);
 
                             options = {
-                                title: 'Distribution of Biological Age',
+                                title: 'Distribution of other users\' biological Age with same social age as you',
                                 width: 900,
                                 legend: {position: 'none'},
                                 chart: {

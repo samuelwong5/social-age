@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^fb_api/', views.fb_api, name='fb_api'),
     url(r'^recommended/', views.recommended, name='recommended'),
     url(r'^analysis/', views.analysis, name='analysis'),
+    url(r'^friends/', views.friends, name='friends'),
     url(r'^graphs/', views.graphs, name='graphs'),
     url(r'^graph_data/', views.graph_data, name='graph_data'),
 ]
