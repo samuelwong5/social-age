@@ -17,6 +17,7 @@ APP_ID = 507982369367860
 APP_SECRET = "213bdd72e269941abce42d09f8908765"
 FACEBOOK_GRAPH_BASE_URI = 'https://graph.facebook.com/v2.5/'
 
+DEPLOY_URL = 'https://murmuring-gorge-9791.herokuapp.com/'
 
 def index(request):
     template = loader.get_template('index_sa.html')
@@ -113,7 +114,7 @@ def fb_results(request):
 def twitter(request):
     if not request.GET:
         # Getting a request token
-        hdr = {'oauth_callback': 'http://localhost:8080/twitter',
+        hdr = {'oauth_callback': DEPLOY_URL + '/twitter',
                'oauth_consumer_key': CONSUMER_ID,  # consumer id
                'oauth_nonce': oauth_nonce(),  # nonce
                'oauth_signature_method': 'HMAC-SHA1',  # signature method
