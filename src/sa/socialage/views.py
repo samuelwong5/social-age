@@ -405,6 +405,13 @@ def analysis(request):
 
 
 def friends(request):
+    template = loader.get_template('result_friends.html')
+    context = RequestContext(request, {})
+    # return redirect('twitter_results')
+    return HttpResponse(template.render(context))
+
+
+def friends_data(request):
     user_id = request.GET.get('id', 0)
     if user_id == 0:
         user_id = request.session['user_id']
@@ -425,17 +432,28 @@ def friends(request):
 
     friends_pic = map(lambda x: "http://graph.facebook.com/" + x.fb_id + "/picture?type=square", friends)
     friends_name = map(lambda x: x.name, friends)
-    friends_age = map(lambda x: age_from_birthday(x.birthday), friends)
-    friends_sage = map(lambda x: x.social_age, friends)
+    friends_age = list(map(lambda x: age_from_birthday(x.birthday), friends))
+    friends_sage = list(map(lambda x: x.social_age, friends))
+    friends_tooltip = map(lambda a,b,c,d: friends_data_tooltip(a,b,c,d), friends_name, friends_age, friends_sage, friends_pic)
+    friends_data = map(lambda x, y, z: [x, y, z], friends_age, friends_sage, friends_tooltip)
+    return JsonResponse({'data': list(friends_data)})
 
-    template = loader.get_template('friends.html')
-    context = RequestContext(request, {'friends_data': zip(friends_pic, friends_name, friends_age, friends_sage),
-                                       'has_friend': 1 if len(friends) != 0 else 0,
-                                       'logged_in_fb': 1 if user.fb_id != -1 else 0,
-                                       }
-                             )
 
-    return HttpResponse(template.render(context))
+def friends_data_tooltip(name, age, soc, img):
+    html = ('<div style="padding:5px 5px 5px 5px;"><img src={3} style="width:75px;height:75px"><br/>'
+            '<b>{0}</b><br />Real: {1}<br />Social: {2}<br /></div>').format(name, age, soc, img)
+    return html
+
+'''
+template = loader.get_template('friends.html')
+context = RequestContext(request, {'friends_data': zip(friends_pic, friends_name, friends_age, friends_sage),
+                                   'has_friend': 1 if len(friends) != 0 else 0,
+                                   'logged_in_fb': 1 if user.fb_id != -1 else 0,
+                                   }
+                         )
+
+return HttpResponse(template.render(context))
+'''
 
 
 def graphs(request):
