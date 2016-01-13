@@ -70,10 +70,15 @@ def fb_results(request):
         user_id = request.session.get('user_id', None)
         if user_id:
             user = models.User.objects.get(id=user_id)
+            try:
+                prev_user = models.User.objects.get(fb_id=fb_user['id'])
+                prev_user.delete()
+            except:
+                pass
             user.name = fb_user['name']
             user.fb_id = fb_user['id']
         else:
-            user = models.User.objects.get(fb_id=user['id'])
+            user = models.User.objects.get(fb_id=fb_user['id'])
         user.birthday = user_bday
         user.save()
         # Clear previous FacebookPageLike objects associated with the User
@@ -158,6 +163,11 @@ def twitter_results(request):
         user_id = request.session.get('user_id', None)
         if user_id:
             user = models.User.objects.get(id=user_id)
+            try:
+                prev_user = models.User.objects.get(tw_id=request.session['tw_id'])
+                prev_user.delete()
+            except:
+                pass
             user.tw_id = request.session['tw_id']
             user.tw_handle = request.session['tw_screen_name']
             user.save()
