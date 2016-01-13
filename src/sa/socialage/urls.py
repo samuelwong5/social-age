@@ -16,4 +16,5 @@ urlpatterns = [
     url(r'^graphs/', views.graphs, name='graphs'),
     url(r'^graph_data/', views.graph_data, name='graph_data'),
     url(r'^resultpage/', views.results, name='resultpage'),
+    url(r'^logout/', views.logout, name='logout')
 ]

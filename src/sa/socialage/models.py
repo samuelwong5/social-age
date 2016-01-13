@@ -11,6 +11,7 @@ class User(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
     fb_id = models.CharField(max_length=60, default=-1)
     tw_id = models.CharField(max_length=60, default=-1)
+    tw_handle = models.CharField(max_length=100, default=-1)
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(default=datetime.now)
     social_age = models.IntegerField(default=0)

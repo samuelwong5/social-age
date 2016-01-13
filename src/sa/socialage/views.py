@@ -1,16 +1,4 @@
-import csv
-import hmac
-import math
-import time
-import random
-import string
-import hashlib
-from base64 import b64encode
-from uuid import uuid4
-
-from datetime import datetime
-from datetime import date, timedelta
-import json
+from datetime import date
 import urllib.request
 import urllib.parse
 
@@ -19,7 +7,6 @@ from django.shortcuts import redirect
 from django.template import RequestContext, loader
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum
 
 from . import age_table
 from . import models
@@ -32,11 +19,14 @@ FACEBOOK_GRAPH_BASE_URI = 'https://graph.facebook.com/v2.5/'
 
 
 def index(request):
-    template = loader.get_template('index_test.html')
+    template = loader.get_template('index_sa.html')
     context = RequestContext(request, {})
     return HttpResponse(template.render(context))
 
 
+def logout(request):
+    request.session.flush()
+    return redirect('index')
 # =====================================================================================================
 # ============================================ APIs  ==================================================
 # =====================================================================================================
@@ -64,7 +54,7 @@ def facebook(request):
             user = facebook_api_get('me', {'fields': 'id,name,birthday',
                                            'access_token': request.session.get('access_token')})
             request.session['user'] = user
-            profile_pic = "http://graph.facebook.com/" + user['id'] + "/picture?height=170&width=170"
+            profile_pic = "http://graph.facebook.com/" + user['id'] + "/picture?type=small"
         template = loader.get_template('result_loading.html')
         context = RequestContext(request, {'api': 'fb',
                                            'profile_pic': profile_pic})
@@ -175,7 +165,8 @@ def twitter_results(request):
         # Clear previous FacebookPageLike objects associated with the User
         user.followed_pages.all().delete()
     except:
-        user = models.User.objects.create(tw_id=request.session['tw_id'], name=request.session['tw_screen_name'])
+        user = models.User.objects.create(tw_id=request.session['tw_id'], name=request.session['tw_screen_name'],
+                                          tw_handle=request.session['tw_screen_name'])
 
     request.session['user_id'] = user.id
 
@@ -324,8 +315,8 @@ def results(request):
             'user_id': user_id,
             'message': msg}
     if "resultpage" in request.build_absolute_uri():
-        if user.fb_id == -1:
-            dict['profile_pic'] = "https://twitter.com/" + user.tw_id + "/profile_image?size=original"
+        if user.fb_id == "-1":
+            dict['profile_pic'] = "https://twitter.com/" + user.tw_handle + "/profile_image?size=original"
         else:
             dict['profile_pic'] = "http://graph.facebook.com/" + user.fb_id + "/picture?height=170&width=170"
         dict['has_fb'] = 0 if user.fb_id == "-1" else 1
@@ -357,7 +348,7 @@ def recommended(request):
     twitter_links_s = map(get_twitter_link, rpages_s)
     fb_pic_a = map(get_facebook_pic, rpages_a)
     fb_pic_s = map(get_facebook_pic, rpages_s)
-    template = loader.get_template('recommended.html')
+    template = loader.get_template('result_recommended.html')
     context = RequestContext(request,
                              {'recommended_actual_age': zip(name_a, facebook_links_a, twitter_links_a, fb_pic_a),
                               'recommended_social_age': zip(name_s, facebook_links_s, twitter_links_s, fb_pic_s),
@@ -403,12 +394,11 @@ def analysis(request):
     fb_page_handle = map(lambda x: x.fb_handle, tested_fb_page)
     tw_page_handle = map(lambda x: x.tw_handle, tested_tw_page)
 
-    template = loader.get_template('analysis.html')
+    template = loader.get_template('result_analysis.html')
     context = RequestContext(request, {'fb_data': zip(fb_page_pic, fb_page_handle, fb_avg_age, fb_page_percent),
                                        'tw_data': zip(tw_page_pic, tw_page_handle, tw_avg_age, tw_page_percent),
                                        }
                              )
-
     return HttpResponse(template.render(context))
 
 
@@ -451,17 +441,6 @@ def friends_data_tooltip(name, age, soc, img):
     html = ('<div style="padding:5px 5px 5px 5px;"><img src={3} style="width:75px;height:75px"><br/>'
             '<b>{0}</b><br />Real: {1}<br />Social: {2}<br /></div>').format(name, age, soc, img)
     return html
-
-'''
-template = loader.get_template('friends.html')
-context = RequestContext(request, {'friends_data': zip(friends_pic, friends_name, friends_age, friends_sage),
-                                   'has_friend': 1 if len(friends) != 0 else 0,
-                                   'logged_in_fb': 1 if user.fb_id != -1 else 0,
-                                   }
-                         )
-
-return HttpResponse(template.render(context))
-'''
 
 
 def graphs(request):
