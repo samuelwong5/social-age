@@ -1,1 +1,1 @@
-web: gunicorn socialage.wsgi --log-file -
+web: python src/sa/manage.py runserver 0.0.0.0:$PORT
