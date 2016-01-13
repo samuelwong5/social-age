@@ -20,11 +20,11 @@ class FollowInLine(admin.TabularInline):
 
 class UserAdmin(admin.ModelAdmin):
     inlines = [LikeInline, FollowInLine]
-    list_display = ('name', 'id', 'birthday')
+    list_display = ('name', 'id', 'birthday', 'age')
 
 
 class PageAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tw_handle', 'fb_handle', 'total' , 'avg_age')
+    list_display = ('name', 'tw_handle', 'fb_handle', 'total', 'avg_age')
 
 
 class AgeTableAdmin(admin.ModelAdmin):

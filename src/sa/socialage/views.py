@@ -294,7 +294,7 @@ def results(request):
     age = predict.predict(fb_page_ids, tw_page_ids)
     age = round(age)
     bio_age = int((date.today() - user.birthday.date()).days / 365.2425)
-    if user.age < 0:  # First time, dont decrement age table
+    if user.age <= 0:  # First time, dont decrement age table
         user.age = bio_age
     else:  # Decrement previous age table entry
         age_table.age_table_sub(bio_age, user.social_age)
