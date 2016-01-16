@@ -3,7 +3,9 @@ import json
 import sys
 import codecs
 from collections import OrderedDict
-
+"""
+Script to join the two csv file into a single json file which can be used by manage.py loaddata to load entries into database.
+"""
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 freq = codecs.open('star_age_frequencies.csv', 'r', 'utf-8')
 jsonFile = codecs.open('star_age_frequencies.json', 'w', 'utf-8')

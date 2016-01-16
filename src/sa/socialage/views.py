@@ -19,6 +19,7 @@ FACEBOOK_GRAPH_BASE_URI = 'https://graph.facebook.com/v2.5/'
 
 DEPLOY_URL = 'https://murmuring-gorge-9791.herokuapp.com/'
 
+
 def index(request):
     template = loader.get_template('index_sa.html')
     context = RequestContext(request, {})
