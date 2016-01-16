@@ -13,10 +13,11 @@ from . import models
 from . import predict
 from .api import *
 
-APP_ID = 507982369367860
-APP_SECRET = "213bdd72e269941abce42d09f8908765"
-FACEBOOK_GRAPH_BASE_URI = 'https://graph.facebook.com/v2.5/'
+FB_APP_ID = 507982369367860
+FB_APP_SECRET = "213bdd72e269941abce42d09f8908765"
+FB_API_BASE_URL = 'https://graph.facebook.com/v2.5/'
 
+# Base URL of deployed website
 DEPLOY_URL = 'https://murmuring-gorge-9791.herokuapp.com/'
 
 def index(request):
@@ -28,15 +29,12 @@ def index(request):
 def logout(request):
     request.session.flush()
     return redirect('index')
-# =====================================================================================================
-# ============================================ APIs  ==================================================
-# =====================================================================================================
 
 
 def facebook(request):
     if not request.GET:  # New session - Facebook authentication
         request.session['index_uri'] = request.build_absolute_uri()
-        return redirect(facebook_api_url_format('oauth/authorize', {'client_id': str(APP_ID),
+        return redirect(facebook_api_url_format('oauth/authorize', {'client_id': str(FB_APP_ID),
                                                                     'redirect_uri': request.session.get('index_uri'),
                                                                     'scope': 'user_likes,user_birthday,user_friends'}))
     else:
@@ -45,9 +43,9 @@ def facebook(request):
         else:
             # Exchange code for access_token
             token = facebook_api_get('oauth/access_token',
-                                     {'client_id': str(APP_ID),
+                                     {'client_id': str(FB_APP_ID),
                                       'redirect_uri': request.session.get('index_uri'),
-                                      'client_secret': APP_SECRET,
+                                      'client_secret': FB_APP_SECRET,
                                       'code': request.GET.get("code")})
             request.session['access_token'] = token['access_token']
             print(request.session['access_token'])
@@ -62,10 +60,40 @@ def facebook(request):
         # return redirect('fb_results')
         return HttpResponse(template.render(context))
 
+'''
+Updates a page's frequency. Set delta to 1 if
+increment the frequency, and delta to -1 if decrement.
+'''
+def page_update_frequency(page, age, delta=1):
+    if age < 12:
+        page.ageUnder12 += delta
+    elif age < 14:
+        page.age12to13 += delta
+    elif age < 16:
+        page.age14to15 += delta
+    elif age < 18:
+        page.age16to17 += delta
+    elif age < 25:
+        page.age18to24  += delta
+    elif age < 35:
+        page.age25to34 += delta
+    elif age < 45:
+        page.age35to44 += delta
+    elif age < 55:
+        page.age45to54 += delta
+    elif age < 65:
+        page.age55to64 += delta
+    else:
+        page.ageAbove65 += delta
+    page.save()
+
 
 def fb_results(request):
     fb_user = request.session['user']
     user_bday = timezone.make_aware(datetime.strptime(fb_user['birthday'], '%m/%d/%Y'), timezone.UTC())
+
+    new_account = True
+
     try:
         user_id = request.session.get('user_id', None)
         if user_id:
@@ -79,10 +107,15 @@ def fb_results(request):
             user.fb_id = fb_user['id']
         else:
             user = models.User.objects.get(fb_id=fb_user['id'])
+            new_account = False
         user.birthday = user_bday
         user.save()
         # Clear previous FacebookPageLike objects associated with the User
-        user.liked_pages.all().delete()
+        if not new_account:
+            for p in user.liked_pages.all():
+                page_update_frequency(p.page, age_from_birthday(user_bday.date()), -1)
+            user.liked_pages.all().delete()
+
     except:
         user = models.User.objects.create(fb_id=fb_user['id'], name=fb_user['name'], birthday=user_bday)
     request.session['user_id'] = user.id
@@ -106,6 +139,15 @@ def fb_results(request):
                 except:
                     pass
         curr_page = http_get(next_page)
+
+    # Add liked pages count to database
+    for p in user.liked_pages.all():
+        page_update_frequency(p.page, age_from_birthday(user_bday.date()))
+
+    # If account newly associated with Facebook, associate Twitter frequencies as well
+    if new_account:
+        for p in user.followed_pages.all():
+            page_update_frequency(p.page, age_from_birthday(user_bday.date()))
 
     # Retrieve friends
     friends = facebook_api_get('me/friends', {'access_token': request.session.get('access_token')})
@@ -174,6 +216,9 @@ def twitter_results(request):
         else:
             user = models.User.objects.get(tw_id=request.session['tw_id'])
         # Clear previous FacebookPageLike objects associated with the User
+        if user.birthday:
+            for p in user.followed_pages.all():
+                page_update_frequency(p.page, age_from_birthday(user.birthday.date()), -1)
         user.followed_pages.all().delete()
     except:
         user = models.User.objects.create(tw_id=request.session['tw_id'], name=request.session['tw_screen_name'],
@@ -211,6 +256,8 @@ def twitter_results(request):
                 page = models.Page.objects.create(name=f['name'],
                                                   tw_id=f['id'],
                                                   tw_handle=f['screen_name'])
+            if user.birthday:
+                page_update_frequency(page, age_from_birthday(user.birthday.date()))
             follow = models.TwitterFollow.objects.create(user=user, page=page)
 
     return redirect('results')
@@ -226,8 +273,6 @@ error or success, an error_msg if and error has occured,
 the facebook user's name, birthday and id, and the list of
 liked pages.
 '''
-
-
 @csrf_exempt
 def fb_api(request):
     access_token = request.POST.get('access_token', -1)
@@ -293,6 +338,11 @@ def fb_api(request):
 # ===================================== Result pages ==================================================
 # =====================================================================================================
 
+def age_from_birthday(bday):
+    return int((date.today() - bday).days / 365.2425)
+
+
+
 """
 Codes from this section are called with AJAX to replace content of result_page.html
 """
@@ -309,7 +359,7 @@ def results(request):
     tw_page_ids = list(map(lambda x: x.page.tw_id, user.followed_pages.all()))
     age = predict.predict(fb_page_ids, tw_page_ids)
     age = round(age)
-    bio_age = int((date.today() - user.birthday.date()).days / 365.2425)
+    bio_age = age_from_birthday(user.birthday.date())
     if user.age <= 0:  # First time, dont decrement age table
         user.age = bio_age
     else:  # Decrement previous age table entry
