@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9060" systemVersion="14F1021" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9051"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="SocialApp" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
+                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LoginColor2" translatesAutoresizingMaskIntoConstraints="NO" id="jFd-4d-Gch">
+                                <rect key="frame" x="0.0" y="-737" width="414" height="737"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="0.0" y="-1" width="414" height="737"/>
+                                </variation>
+                            </imageView>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="Guess My Social Age" translatesAutoresizingMaskIntoConstraints="NO" id="icw-OM-f8D">
+                                <rect key="frame" x="0.0" y="-26" width="238" height="26"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="88" y="227" width="238" height="26"/>
+                                </variation>
+                            </imageView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="OIi-wk-E3F">
+                                <rect key="frame" x="-10" y="-10" width="20" height="20"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="197" y="358" width="20" height="20"/>
+                                </variation>
+                            </activityIndicatorView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <variation key="default">
+                            <mask key="subviews">
+                                <exclude reference="jFd-4d-Gch"/>
+                                <exclude reference="icw-OM-f8D"/>
+                                <exclude reference="OIi-wk-E3F"/>
+                            </mask>
+                        </variation>
+                        <variation key="widthClass=compact">
+                            <mask key="subviews">
+                                <include reference="jFd-4d-Gch"/>
+                                <include reference="icw-OM-f8D"/>
+                                <include reference="OIi-wk-E3F"/>
+                            </mask>
+                        </variation>
+                    </view>
+                    <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina55"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1.5" y="389"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="trX-Iq-ShD">
+            <objects>
+                <viewController id="J7F-1h-sUp" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="qjM-1C-DoN"/>
+                        <viewControllerLayoutGuide type="bottom" id="EX7-xd-aLF"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Da1-GM-b4R">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LoginFill" translatesAutoresizingMaskIntoConstraints="NO" id="BrL-3Z-6HW">
+                                <rect key="frame" x="0.0" y="-755" width="433" height="755"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="-9" y="-10" width="433" height="755"/>
+                                </variation>
+                            </imageView>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="Guess My Social Age" translatesAutoresizingMaskIntoConstraints="NO" id="BnB-2N-TL0">
+                                <rect key="frame" x="0.0" y="-26" width="238" height="26"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="85" y="226" width="238" height="26"/>
+                                </variation>
+                            </imageView>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="FaceBookLogin" translatesAutoresizingMaskIntoConstraints="NO" id="M4I-cm-0ek">
+                                <rect key="frame" x="0.0" y="-54" width="247" height="54"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="84" y="269" width="247" height="54"/>
+                                </variation>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="LjQ-4Z-b3L">
+                                <rect key="frame" x="-23" y="-15" width="46" height="30"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="85" y="269" width="246" height="54"/>
+                                </variation>
+                                <connections>
+                                    <segue destination="dG7-wb-Wcd" kind="modal" id="iAk-5x-aXj"/>
+                                </connections>
+                            </button>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="FacebookTwitter" translatesAutoresizingMaskIntoConstraints="NO" id="YuM-oB-eJj">
+                                <rect key="frame" x="0.0" y="-54" width="247" height="54"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="84" y="331" width="247" height="54"/>
+                                </variation>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="SlF-Ci-TCf">
+                                <rect key="frame" x="-23" y="-15" width="46" height="30"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="84" y="331" width="246" height="54"/>
+                                </variation>
+                            </button>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="InstagramLogin" translatesAutoresizingMaskIntoConstraints="NO" id="ild-b4-iWG">
+                                <rect key="frame" x="0.0" y="-54" width="247" height="54"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="83" y="393" width="247" height="54"/>
+                                </variation>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="2Ma-xk-8sK">
+                                <rect key="frame" x="-23" y="-15" width="46" height="30"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="84" y="393" width="246" height="54"/>
+                                </variation>
+                            </button>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="Guest" translatesAutoresizingMaskIntoConstraints="NO" id="bpQ-xV-UmL">
+                                <rect key="frame" x="0.0" y="-54" width="246" height="54"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="83" y="455" width="248" height="54"/>
+                                </variation>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pzv-r6-BDG">
+                                <rect key="frame" x="-23" y="-15" width="46" height="30"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="83" y="455" width="246" height="54"/>
+                                </variation>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <variation key="default">
+                            <mask key="subviews">
+                                <exclude reference="BrL-3Z-6HW"/>
+                                <exclude reference="BnB-2N-TL0"/>
+                                <exclude reference="M4I-cm-0ek"/>
+                                <exclude reference="LjQ-4Z-b3L"/>
+                                <exclude reference="YuM-oB-eJj"/>
+                                <exclude reference="SlF-Ci-TCf"/>
+                                <exclude reference="ild-b4-iWG"/>
+                                <exclude reference="2Ma-xk-8sK"/>
+                                <exclude reference="bpQ-xV-UmL"/>
+                                <exclude reference="pzv-r6-BDG"/>
+                            </mask>
+                        </variation>
+                        <variation key="widthClass=compact">
+                            <mask key="subviews">
+                                <include reference="BrL-3Z-6HW"/>
+                                <include reference="BnB-2N-TL0"/>
+                                <include reference="M4I-cm-0ek"/>
+                                <include reference="LjQ-4Z-b3L"/>
+                                <include reference="YuM-oB-eJj"/>
+                                <include reference="SlF-Ci-TCf"/>
+                                <include reference="ild-b4-iWG"/>
+                                <include reference="2Ma-xk-8sK"/>
+                                <include reference="bpQ-xV-UmL"/>
+                                <include reference="pzv-r6-BDG"/>
+                            </mask>
+                        </variation>
+                    </view>
+                    <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina55"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="N7w-Fm-meG" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="708" y="389"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="OdC-Pe-FZ9">
+            <objects>
+                <viewController id="dG7-wb-Wcd" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="zsc-Jj-t3Z"/>
+                        <viewControllerLayoutGuide type="bottom" id="eWL-Jz-YC3"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="U3S-2I-TxE">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LoginColor2" translatesAutoresizingMaskIntoConstraints="NO" id="YBi-e2-rdX">
+                                <rect key="frame" x="0.0" y="-737" width="414" height="737"/>
+                                <gestureRecognizers/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="0.0" y="-1" width="414" height="737"/>
+                                </variation>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="BQN-uS-kSY" appends="YES" id="W2P-nx-hjv"/>
+                                    <outletCollection property="gestureRecognizers" destination="BQN-uS-kSY" appends="YES" id="Wb4-Cf-gqG"/>
+                                </connections>
+                            </imageView>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="PaJ-lL-t57">
+                                <rect key="frame" x="-25" y="-30" width="97" height="30"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="130" y="396" width="179" height="30"/>
+                                </variation>
+                            </textField>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Syd-IQ-5Me">
+                                <rect key="frame" x="-25" y="-30" width="97" height="30"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="130" y="353" width="179" height="30"/>
+                                </variation>
+                            </textField>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="email" translatesAutoresizingMaskIntoConstraints="NO" id="W7M-Jh-LpE">
+                                <rect key="frame" x="0.0" y="-353" width="263" height="353"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="76" y="208" width="263" height="353"/>
+                                </variation>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <variation key="default">
+                            <mask key="subviews">
+                                <exclude reference="YBi-e2-rdX"/>
+                                <exclude reference="PaJ-lL-t57"/>
+                                <exclude reference="Syd-IQ-5Me"/>
+                                <exclude reference="W7M-Jh-LpE"/>
+                            </mask>
+                        </variation>
+                        <variation key="widthClass=compact">
+                            <mask key="subviews">
+                                <include reference="YBi-e2-rdX"/>
+                                <include reference="PaJ-lL-t57"/>
+                                <include reference="Syd-IQ-5Me"/>
+                                <include reference="W7M-Jh-LpE"/>
+                            </mask>
+                        </variation>
+                    </view>
+                    <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina55"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="8dc-9p-mcl" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <swipeGestureRecognizer direction="left" id="BQN-uS-kSY">
+                    <connections>
+                        <segue destination="J7F-1h-sUp" kind="modal" id="WzW-XW-EKm"/>
+                    </connections>
+                </swipeGestureRecognizer>
+            </objects>
+            <point key="canvasLocation" x="1594.5" y="9"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="8PZ-Ek-60f">
+            <objects>
+                <viewController id="Y46-SH-Mhb" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="520-dH-8QE"/>
+                        <viewControllerLayoutGuide type="bottom" id="FI1-7p-9Hv"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="BiP-2L-Qhm">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LoginColor2" translatesAutoresizingMaskIntoConstraints="NO" id="oy4-pH-xDC">
+                                <rect key="frame" x="0.0" y="-737" width="414" height="737"/>
+                                <gestureRecognizers/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="0.0" y="-1" width="414" height="737"/>
+                                </variation>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="IHY-bQ-m5e" appends="YES" id="VLM-od-zn0"/>
+                                    <outletCollection property="gestureRecognizers" destination="IHY-bQ-m5e" appends="YES" id="Ydq-YT-lzZ"/>
+                                </connections>
+                            </imageView>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="tVq-SI-VnX">
+                                <rect key="frame" x="-25" y="-30" width="97" height="30"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="130" y="396" width="179" height="30"/>
+                                </variation>
+                            </textField>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="69F-68-Aet">
+                                <rect key="frame" x="-25" y="-30" width="97" height="30"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="130" y="353" width="179" height="30"/>
+                                </variation>
+                            </textField>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="email" translatesAutoresizingMaskIntoConstraints="NO" id="stT-7K-HNs">
+                                <rect key="frame" x="0.0" y="-353" width="263" height="353"/>
+                                <variation key="widthClass=compact" fixedFrame="YES">
+                                    <rect key="frame" x="76" y="208" width="263" height="353"/>
+                                </variation>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <variation key="default">
+                            <mask key="subviews">
+                                <exclude reference="oy4-pH-xDC"/>
+                                <exclude reference="tVq-SI-VnX"/>
+                                <exclude reference="69F-68-Aet"/>
+                                <exclude reference="stT-7K-HNs"/>
+                            </mask>
+                        </variation>
+                        <variation key="widthClass=compact">
+                            <mask key="subviews">
+                                <include reference="oy4-pH-xDC"/>
+                                <include reference="tVq-SI-VnX"/>
+                                <include reference="69F-68-Aet"/>
+                                <include reference="stT-7K-HNs"/>
+                            </mask>
+                        </variation>
+                    </view>
+                    <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina55"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iwx-hT-gPV" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <swipeGestureRecognizer direction="left" id="IHY-bQ-m5e"/>
+            </objects>
+            <point key="canvasLocation" x="1594.5" y="885"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="FaceBookLogin" width="247" height="54"/>
+        <image name="FacebookTwitter" width="247" height="54"/>
+        <image name="Guess My Social Age" width="238" height="26"/>
+        <image name="Guest" width="246" height="54"/>
+        <image name="InstagramLogin" width="247" height="54"/>
+        <image name="LoginColor2" width="414" height="737"/>
+        <image name="LoginFill" width="433" height="755"/>
+        <image name="email" width="263" height="353"/>
+    </resources>
+    <color key="tintColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+</document>

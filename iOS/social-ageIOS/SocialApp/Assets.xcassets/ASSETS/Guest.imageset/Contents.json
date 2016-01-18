@@ -2,10 +2,8 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "Don't have an accoun.png",
+      "filename" : "Guest.png",
       "scale" : "1x"
-<<<<<<< HEAD
-=======
     },
     {
       "idiom" : "universal",
@@ -14,7 +12,6 @@
     {
       "idiom" : "universal",
       "scale" : "3x"
->>>>>>> 39d215cd4ff7f672adad6c7ec32b0ba7e2a1fd95
     }
   ],
   "info" : {

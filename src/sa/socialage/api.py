@@ -30,7 +30,7 @@ returns the header. Add the header to the HTTP request by
 
 
 def twitter_header(dict):
-    return ('OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(dict.items())))))
+    return 'OAuth ' + ', '.join(list(map(lambda x: str(x[0]) + '="' + str(x[1]) + '"', sorted(dict.items()))))
 
 
 def oauth_sign(method, url, dict, oauth_token_secret=''):
@@ -55,7 +55,7 @@ def oauth_timestamp():
 # Construct http requests
 def twitter_api_url_format(url, params={}):
     if params == {}:
-        return (BASE_API_URL + url)
+        return BASE_API_URL + url
     else:
         return '{0}{1}?{2}'.format(BASE_API_URL, url, urllib.parse.urlencode(params))
 

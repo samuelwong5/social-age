@@ -12,7 +12,7 @@ TEST_IDS_FB = ["19691681472", "21785951839"]
 MIN_TESTSTARS = 1
 
 
-def predict(test_ids_fb, test_ids_tw, debug=False):
+def predict(test_ids_fb, test_ids_tw, debug=False, missing_link=False):
     """
     Predict user's social age using Naive Bayes classifier
     Calculating P(page1,page2,...pagen|agegroup) * P(agegroup)
@@ -46,6 +46,8 @@ def predict(test_ids_fb, test_ids_tw, debug=False):
     log_prob = np.log(prob)
     # Sum the log prob of all stars
     joint = np.sum(log_prob, 0)
+    # if missing_link:
+    # Add missing link code here...
     # Multiply with the prior i.e. add to the log prob
     joint += np.log(PRIOR)
     # Unnormalize before unlogging to prevent underflow

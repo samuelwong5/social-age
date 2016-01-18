@@ -20,6 +20,7 @@ FB_API_BASE_URL = 'https://graph.facebook.com/v2.5/'
 # Base URL of deployed website
 DEPLOY_URL = 'https://murmuring-gorge-9791.herokuapp.com/'
 
+
 def index(request):
     template = loader.get_template('index_sa.html')
     context = RequestContext(request, {})
@@ -113,7 +114,7 @@ def fb_results(request):
         # Clear previous FacebookPageLike objects associated with the User
         if not new_account:
             for p in user.liked_pages.all():
-                page_update_frequency(p.page, age_from_birthday(user_bday.date()), -1)
+                page_update_frequency(p.page, age_from_birthday(user_bday), -1)
             user.liked_pages.all().delete()
 
     except:
@@ -142,12 +143,12 @@ def fb_results(request):
 
     # Add liked pages count to database
     for p in user.liked_pages.all():
-        page_update_frequency(p.page, age_from_birthday(user_bday.date()))
+        page_update_frequency(p.page, age_from_birthday(user_bday))
 
     # If account newly associated with Facebook, associate Twitter frequencies as well
     if new_account:
         for p in user.followed_pages.all():
-            page_update_frequency(p.page, age_from_birthday(user_bday.date()))
+            page_update_frequency(p.page, age_from_birthday(user_bday))
 
     # Retrieve friends
     friends = facebook_api_get('me/friends', {'access_token': request.session.get('access_token')})
@@ -218,7 +219,7 @@ def twitter_results(request):
         # Clear previous FacebookPageLike objects associated with the User
         if user.birthday:
             for p in user.followed_pages.all():
-                page_update_frequency(p.page, age_from_birthday(user.birthday.date()), -1)
+                page_update_frequency(p.page, age_from_birthday(user.birthday), -1)
         user.followed_pages.all().delete()
     except:
         user = models.User.objects.create(tw_id=request.session['tw_id'], name=request.session['tw_screen_name'],
@@ -257,7 +258,7 @@ def twitter_results(request):
                                                   tw_id=f['id'],
                                                   tw_handle=f['screen_name'])
             if user.birthday:
-                page_update_frequency(page, age_from_birthday(user.birthday.date()))
+                page_update_frequency(page, age_from_birthday(user.birthday))
             follow = models.TwitterFollow.objects.create(user=user, page=page)
 
     return redirect('results')
@@ -339,7 +340,7 @@ def fb_api(request):
 # =====================================================================================================
 
 def age_from_birthday(bday):
-    return int((date.today() - bday).days / 365.2425)
+    return int((date.today() - bday.date()).days / 365.2425)
 
 
 
@@ -352,6 +353,8 @@ def results(request):
     user_id = request.GET.get('id', 0)
     if user_id == 0:
         user_id = request.session['user_id']
+    else:
+        request.session['user_id'] = user_id
     user = models.User.objects.get(id=user_id)
     if user is None:
         return redirect('index')
@@ -359,7 +362,7 @@ def results(request):
     tw_page_ids = list(map(lambda x: x.page.tw_id, user.followed_pages.all()))
     age = predict.predict(fb_page_ids, tw_page_ids)
     age = round(age)
-    bio_age = age_from_birthday(user.birthday.date())
+    bio_age = age_from_birthday(user.birthday)
     if user.age <= 0:  # First time, dont decrement age table
         user.age = bio_age
     else:  # Decrement previous age table entry
@@ -566,10 +569,6 @@ def graph_data(request):
 # =====================================================================================================
 # ======================================= Util functions ==============================================
 # =====================================================================================================
-
-def age_from_birthday(birthday):
-    return int((date.today() - birthday.date()).days / 365.2425)
-
 
 def fb_pages_from_user(user):
     return list(map(lambda x: x.page.fb_id, user.liked_pages.all()))
