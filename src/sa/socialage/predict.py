@@ -1,6 +1,7 @@
 import numpy as np
 from .models import Page
 from django.db.models import Sum
+from itertools import chain
 # Precomputed prior distribution (P(agegroup))
 PRIOR = np.array([0.008, 0.02, 0.029, 0.023, 0.14, 0.23, 0.22, 0.23, 0.06, 0.04])
 # Middle value of each age group
@@ -12,7 +13,7 @@ TEST_IDS_FB = ["19691681472", "21785951839"]
 MIN_TESTSTARS = 1
 
 
-def predict(test_ids_fb, test_ids_tw, debug=False, missing_link=False):
+def predict(test_ids_fb, test_ids_tw, debug=False):
     """
     Predict user's social age using Naive Bayes classifier
     Calculating P(page1,page2,...pagen|agegroup) * P(agegroup)
@@ -21,33 +22,21 @@ def predict(test_ids_fb, test_ids_tw, debug=False, missing_link=False):
     and using the normalized value of this to determine his probability to belong to each respective
     age gorup.
     :param test_ids: ids of pages the user liked
-    :param network: string 'fb' or 'tw'(facebook or twitter)
     :return: predicted age.
     """
-
     if debug:
         test_ids_tw = TEST_IDS_TW
         test_ids_fb = TEST_IDS_FB
-
-    # Retrieve all pages
-    pages = Page.objects.order_by('-total')
-    test_stars_fb = pages.filter(fb_id__in=test_ids_fb, total__gte=20)
-    test_stars_tw = pages.filter(tw_id__in=test_ids_tw, total__gte=20)
-    test_stars = test_stars_fb | test_stars_tw
-
+    prob, test_stars = extract_prob(test_ids_fb, test_ids_tw, missing_link=30)
     # if the amount of test_stars is less than MIN_TESTSTARS,
     # return -1 and tell user that the pages they provided are
     # insufficient to compute an accurate social age
     if len(test_stars) < MIN_TESTSTARS:
         return -1
-
-    prob = extract_prob(test_stars)
     # Log the probabilities
     log_prob = np.log(prob)
     # Sum the log prob of all stars
     joint = np.sum(log_prob, 0)
-    # if missing_link:
-    # Add missing link code here...
     # Multiply with the prior i.e. add to the log prob
     joint += np.log(PRIOR)
     # Unnormalize before unlogging to prevent underflow
@@ -60,21 +49,34 @@ def predict(test_ids_fb, test_ids_tw, debug=False, missing_link=False):
     return sum(map(lambda x, y: x * y, age_prob.tolist(), AGE_GROUP))
 
 
-def extract_prob(test_stars):
+def extract_prob(test_ids_fb, test_ids_tw, missing_link=0, debug=False):
     """
-    :param test_stars: pages to be tested
+    :param test_stars: pages to be tested, type: Django QuerySet
+    :param missing_link: number of top stars to calculate the probability of not following
     :return: probabilities of following the page given different age groups P(page|agegroup) in a np.ndarray
     """
-    prob = np.zeros(shape=(len(test_stars), 10), dtype=float)
+    if debug:
+        test_ids_tw = TEST_IDS_TW
+        test_ids_fb = TEST_IDS_FB
+    # Retrieve test stars pages as test_stars
+    pages = Page.objects.order_by('-total')
+    test_stars_fb = pages.filter(fb_id__in=test_ids_fb, total__gte=20)
+    test_stars_tw = pages.filter(tw_id__in=test_ids_tw, total__gte=20)
+    test_stars = test_stars_fb | test_stars_tw
+    # Retrieve top stars that are not followed
+    inner_q = Page.objects.order_by('-total').values('id')[:missing_link]
+    top_not_followed = Page.objects.filter(id__in=inner_q).exclude(fb_id__in=test_ids_fb).exclude(tw_id__in=test_ids_tw)
+    prob = np.zeros(shape=(len(test_stars) + len(top_not_followed), 10), dtype=float)
+    all_test_pages = list(chain(test_stars, top_not_followed))
     i = 0
     # Calculate the total number of number sample follows made by each age groups,
-    #   save them in a list.
+    #  save them in a list.
     f = lambda x: list(Page.objects.aggregate(Sum(x)).values())[0]
     totals = [f('ageUnder12'), f('age12to13'), f('age14to15'), f('age16to17'), f('age18to24'),
               f('age25to34'), f('age35to44'), f('age45to54'), f('age55to64'), f('ageAbove65')]
 
     # (f + 1) / (F + 10)
-    for s in test_stars:
+    for s in all_test_pages:
         prob[i][0] += s.ageUnder12
         prob[i][1] += s.age12to13
         prob[i][2] += s.age14to15
@@ -89,7 +91,10 @@ def extract_prob(test_stars):
     prob += 1
     for k in range(10):
         prob[:, k] /= (totals[k] + 10)
-    return prob
+        # prob of not following = 1 - prob of following
+        prob[len(test_stars):len(all_test_pages), k] = 1 - prob[len(test_stars):len(all_test_pages), k]
+
+    return prob, test_stars
 
 
 def page_avg_age(page):
@@ -104,7 +109,8 @@ def recommend(user_age, exclude_twids=[], exclude_fbids=[], bound=3, page_needed
     # Return the 5 random pages with decent popularity and same/similar page_avg_age as user_age.
     # Criteria: (page's average age - user_age) <= |bound| && both tw_id and fb_id exist.
     # Possible improvement: random based on the distribution on total instead of uniform distribution.
-    pages = Page.objects.order_by('-total').filter(avg_age__lte=(user_age+bound)).filter(avg_age__gte=(user_age-bound))
+    pages = Page.objects.order_by('-total').filter(avg_age__lte=(user_age + bound)).filter(
+        avg_age__gte=(user_age - bound))
     pages = pages.exclude(tw_id="").exclude(fb_id="").filter(total__gte=200)
     pages = pages.exclude(tw_id__in=exclude_twids).exclude(fb_id__in=exclude_fbids)
     return pages.order_by('?')[:page_needed]
