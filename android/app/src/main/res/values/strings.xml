@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Another</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="title_activity_main_page">MainPage</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="app_id">507982369367860</string>
+    <string name="title_activity_account">AccountActivity</string>
+</resources>
