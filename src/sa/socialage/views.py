@@ -13,8 +13,8 @@ from . import models
 from . import predict
 from .api import *
 
-FB_APP_ID = 507982369367860
-FB_APP_SECRET = "213bdd72e269941abce42d09f8908765"
+FB_APP_ID = 
+FB_APP_SECRET = 
 FB_API_BASE_URL = 'https://graph.facebook.com/v2.5/'
 
 # Base URL of deployed website
